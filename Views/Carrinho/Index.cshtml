@@ -1,0 +1,58 @@
+@model IEnumerable<Ecomerce.Models.ItemCarrinho>
+
+@{
+    ViewData["Title"] = "Seu Carrinho de Compras";
+    decimal total = ViewData["CarrinhoTotal"] as decimal? ?? 0;
+}
+
+<h2>@ViewData["Title"]</h2>
+<hr />
+
+@if (!Model.Any())
+{
+    <p>O seu carrinho de compras está vazio. <a asp-controller="Produtos" asp-action="Index">Veja os nossos produtos!</a>
+    </p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Produto</th>
+                <th>Preço Unitário</th>
+                <th>Quantidade</th>
+                <th>Subtotal</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.Produto?.Nome</td>
+                    <td>@item.Produto?.Preco.ToString("C2")</td>
+                    <td>@item.Quantidade</td>
+                    <td>@((item.Produto?.Preco * item.Quantidade).GetValueOrDefault().ToString("C2"))</td>
+                    <td>
+                        <form asp-action="Remover" method="post">
+                            <input type="hidden" name="id" value="@item.ProdutoId" />
+                            <button type="submit" class="btn btn-sm btn-danger">Remover</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="3" class="text-right"><strong>TOTAL:</strong></td>
+                <td><strong>@total.ToString("C2")</strong></td>
+                <td></td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <div class="text-right">
+        <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">Continuar Comprando</a>
+        <a asp-controller="Checkout" asp-action="Index" class="btn btn-success">Finalizar Compra</a>
+    </div>
+}

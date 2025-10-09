@@ -1,0 +1,65 @@
+@using Ecomerce.Models
+@model IEnumerable<Encomenda>
+
+@{
+    ViewData["Title"] = "Painel de Encomendas";
+}
+
+<hr />
+<h1>@ViewData["Title"]</h1>
+
+<p class="text-info">Exibindo as encomendas mais recentes.</p>
+<hr />
+
+<form asp-action="Index" method="get" class="mb-4">
+    <div class="row">
+        <div class="col-md-4">
+            <label for="dataInicial" class="form-label">Data Inicial:</label>
+            <input type="date" name="dataInicial" id="dataInicial" value="@ViewData["DataInicial"]"
+                class="form-control" />
+        </div>
+        <div class="col-md-4">
+            <label for="dataFinal" class="form-label">Data Final:</label>
+            <input type="date" name="dataFinal" id="dataFinal" value="@ViewData["DataFinal"]" class="form-control" />
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary me-2">Filtrar</button>
+            <a asp-action="Index" class="btn btn-secondary">Limpar Filtro</a>
+        </div>
+    </div>
+</form>
+
+<hr />
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Data</th>
+            <th>Cliente</th>
+            <th>Itens</th>
+            <th>Total</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (Encomenda item in Model)
+        {
+            <tr>
+                <td>#@item.Id</td>
+                <td>@item.DataEncomenda.ToString("dd/MM/yyyy HH:mm")</td>
+                <td>@item.NomeCliente</td>
+                <td>@(item.ItensEncomenda?.Sum(i => i.Quantidade) ?? 0)</td>
+                <td>@item.EncomendaTotal.ToString("C2")</td>
+                <td>
+                    <a asp-action="Detalhes" asp-route-id="@item.Id" class="btn btn-sm btn-info">Detalhes</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-warning">Ainda não há encomendas registadas.</div>
+}

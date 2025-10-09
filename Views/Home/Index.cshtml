@@ -1,0 +1,39 @@
+﻿@model List<Ecomerce.Models.Produto>
+
+@{
+    ViewData["Title"] = "Bem-vindo à Loja";
+}
+
+<div class="text-center mb-5">
+    <h1 class="display-4">Nossos Produtos</h1>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-warning text-center">Nenhum produto em estoque para exibir.</div>
+}
+else
+{
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        @foreach (var produto in Model)
+        {
+            <div class="col">
+                <div class="card h-100 shadow-sm">
+                    <img src="@produto.ImagemUrl" class="card-img-top" alt="@produto.Nome"
+                        style="height: 250px; object-fit: cover;">
+
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">@produto.Nome</h5>
+                        <p class="card-text text-muted flex-grow-1">@produto.Descricao</p>
+                        <h4 class="text-success mt-auto">@produto.Preco.ToString("C2")</h4>
+
+                        <a asp-controller="Produtos" asp-action="Details" asp-route-id="@produto.Id"
+                            class="btn btn-primary mt-2">
+                            Ver Detalhes
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

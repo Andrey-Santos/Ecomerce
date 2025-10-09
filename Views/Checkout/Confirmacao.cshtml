@@ -1,0 +1,15 @@
+@{
+    ViewData["Title"] = "Encomenda Confirmada";
+}
+
+<div class="jumbotron text-center">
+    <h1 class="display-3 text-success">Encomenda Processada com Sucesso!</h1>
+    <p class="lead">Obrigado pela sua compra. O seu pedido foi registado.</p>
+    <hr>
+    <p>
+        O ID da sua encomenda é: <strong>#@ViewData["EncomendaId"]</strong>
+    </p>
+    <p class="lead">
+        <a asp-controller="Home" asp-action="Index" class="btn btn-primary btn-lg">Voltar à Página Inicial</a>
+    </p>
+</div>
