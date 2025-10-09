@@ -31,8 +31,7 @@ namespace Ecomerce.Controllers
                 return NotFound();
             }
 
-            var produto = await _context.Produtos
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var produto = await _context.Produtos.FirstOrDefaultAsync(m => m.Id == id);
             if (produto == null)
             {
                 return NotFound();
