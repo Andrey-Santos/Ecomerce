@@ -2,16 +2,19 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Ecomerce.Data;
 using Ecomerce.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Ecomerce.Controllers
 {
     public class ProdutosController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IWebHostEnvironment _hostEnvironment;
 
-        public ProdutosController(ApplicationDbContext context)
+        public ProdutosController(ApplicationDbContext context, IWebHostEnvironment hostEnvironment)
         {
             _context = context;
+            _hostEnvironment = hostEnvironment;
         }
 
         // GET: Produtos
@@ -38,21 +41,44 @@ namespace Ecomerce.Controllers
             return View(produto);
         }
 
-        // GET: Produtos/Create
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: Produtos/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Nome,Descricao,Preco,ImagemUrl,Estoque")] Produto produto)
+        [Authorize(Roles = "Admin")] // Garanta que apenas admins podem criar
+        public async Task<IActionResult> Create([Bind("Id,Nome,Descricao,Preco,Estoque,ImagemUpload")] Produto produto)
         {
+            ModelState.Remove("ImagemUrl");
+            
             if (ModelState.IsValid)
             {
+                if (produto.ImagemUpload != null)
+                {
+                    // 1. Define o caminho: wwwroot/imagens/
+                    string wwwRootPath = _hostEnvironment.WebRootPath;
+                    string path = Path.Combine(wwwRootPath, "imagens");
+
+                    // 2. Garante que a pasta existe
+                    if (!Directory.Exists(path)) Directory.CreateDirectory(path);
+
+                    // 3. Gera um nome de ficheiro único (para evitar conflitos)
+                    string fileName = Guid.NewGuid().ToString() + Path.GetExtension(produto.ImagemUpload.FileName);
+                    string filePath = Path.Combine(path, fileName);
+
+                    // 4. Salva o ficheiro no disco
+                    using (var fileStream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await produto.ImagemUpload.CopyToAsync(fileStream);
+                    }
+
+                    // 5. Salva o URL relativo no Modelo (para ir para o DB)
+                    produto.ImagemUrl = "/imagens/" + fileName;
+                }
+
+                // 6. Salva o Produto no DB
                 _context.Add(produto);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));

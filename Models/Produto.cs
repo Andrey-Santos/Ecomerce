@@ -24,7 +24,9 @@ namespace Ecomerce.Models
 
         [Display(Name = "URL da Imagem")]
         public string ImagemUrl { get; set; } = default!;
-    
+        
+        [NotMapped]
+        public IFormFile? ImagemUpload { get; set; } 
     
         [Required]
         [Range(0, int.MaxValue, ErrorMessage = "O estoque não pode ser negativo.")]
