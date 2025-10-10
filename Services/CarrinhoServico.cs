@@ -1,5 +1,6 @@
 using Ecomerce.Data;
 using Ecomerce.Models;
+using Microsoft.EntityFrameworkCore;
 using System.Text.Json; 
 
 namespace Ecomerce.Services
@@ -40,6 +41,16 @@ namespace Ecomerce.Services
         public List<ItemCarrinho> ObterItens()
         {
             return ObterCarrinhoDaSessao();
+        }
+        
+        public async Task<List<ItemCarrinho>> ObterDetalhesDoCarrinho()
+        {
+            var carrinhoItens = ObterItens();
+
+            foreach (var item in carrinhoItens)
+                item.Produto = await _context.Produtos.FirstOrDefaultAsync(p => p.Id == item.ProdutoId);
+
+            return carrinhoItens;
         }
 
         public void AdicionarItem(int produtoId, int quantidade)

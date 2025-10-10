@@ -10,7 +10,7 @@ namespace Ecomerce.Data
         {
         }
         public DbSet<Produto> Produtos { get; set; }
-        public DbSet<Encomenda> Encomendas { get; set; } 
-        public DbSet<ItemEncomenda> ItensEncomenda { get; set; }
+        public DbSet<Pedido> Pedidos { get; set; } = default!;
+        public DbSet<ItemPedido> ItensPedido { get; set; } = default!;
     }
 }

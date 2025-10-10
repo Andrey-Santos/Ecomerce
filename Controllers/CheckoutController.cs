@@ -1,102 +1,117 @@
-using Ecomerce.Data;
-using Ecomerce.Models;
-using Ecomerce.Services;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
+using Ecomerce.Services;
+using System.Security.Claims;
+using Ecomerce.Data;
+using Ecomerce.Models;
 
-// ... (usings)
-
-// Apenas utilizadores autenticados podem aceder a este controller
 [Authorize]
 public class CheckoutController : Controller
 {
     private readonly ApplicationDbContext _context;
-    private readonly ICarrinhoServico _carrinhoServico;
     private readonly UserManager<IdentityUser> _userManager;
+    private readonly ICarrinhoServico _carrinhoServico;
 
-    // Construtor... (Não Mudar!)
     public CheckoutController(
         ApplicationDbContext context,
-        ICarrinhoServico carrinhoServico,
-        UserManager<IdentityUser> userManager)
+        UserManager<IdentityUser> userManager,
+        ICarrinhoServico carrinhoServico)
     {
         _context = context;
-        _carrinhoServico = carrinhoServico;
         _userManager = userManager;
+        _carrinhoServico = carrinhoServico;
     }
 
-    // [GET] Index... (Não Mudar!)
-    public IActionResult Index()
+    [HttpGet]
+    public async Task<IActionResult> Index()
     {
-        var carrinhoItens = _carrinhoServico.ObterItens();
+        var carrinhoItens = await _carrinhoServico.ObterDetalhesDoCarrinho();
 
         if (!carrinhoItens.Any())
         {
-            TempData["MensagemErro"] = "O carrinho está vazio. Adicione produtos antes de finalizar a compra.";
-            return RedirectToAction("Index", "Carrinho");
+            TempData["Error"] = "Seu carrinho está vazio.";
+            return RedirectToAction("Index", "Home");
         }
 
-        return View(new Encomenda());
+        ViewBag.CarrinhoItens = carrinhoItens;
+        ViewBag.TotalCarrinho = carrinhoItens != null ? _carrinhoServico.ObterTotal(carrinhoItens) : 0.00m;
+
+        return View(new Pedido());
     }
 
     [HttpPost]
-    public async Task<IActionResult> Index(Encomenda encomenda)
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Index([Bind("NomeCliente,Endereco,Cidade")] Pedido pedido)
     {
-        var carrinhoItens = _carrinhoServico.ObterItens();
-
-        if (!carrinhoItens.Any())
+        var carrinhoItens = await _carrinhoServico.ObterDetalhesDoCarrinho();
+        try
         {
-            ModelState.AddModelError("", "O carrinho está vazio.");
-        }
-
-        if (!ModelState.IsValid)
-            return View(encomenda);
-
-        var userId = _userManager.GetUserId(User);
-        var total  = _carrinhoServico.ObterTotal(carrinhoItens);
-
-        encomenda.UtilizadorId = userId;
-        encomenda.DataEncomenda = DateTime.Now;
-        encomenda.EncomendaTotal = total;
-
-        var produtoIds = carrinhoItens.Select(i => i.ProdutoId).ToList();
-        var produtos = _context.Produtos.Where(p => produtoIds.Contains(p.Id)).ToList();
-
-        encomenda.ItensEncomenda = new List<ItemEncomenda>();
-
-        foreach (var itemCarrinho in carrinhoItens)
-        {
-            var produto = produtos.FirstOrDefault(p => p.Id == itemCarrinho.ProdutoId);
-
-            if (produto == null || produto.Estoque < itemCarrinho.Quantidade)
+            if (!ModelState.IsValid)
             {
-                ModelState.AddModelError("", $"Estoque insuficiente para {produto?.Nome ?? "Produto Desconhecido"}.");
-                return View(encomenda);
+                ViewBag.CarrinhoItens = carrinhoItens;
+                ViewBag.TotalCarrinho = carrinhoItens != null ? _carrinhoServico.ObterTotal(carrinhoItens) : 0.00m;
+                return View(pedido);
             }
 
-            produto.Estoque -= itemCarrinho.Quantidade;
-
-            var itemEncomenda = new ItemEncomenda
+            if (!carrinhoItens.Any())
             {
-                ProdutoId = produto.Id,
-                Quantidade = itemCarrinho.Quantidade,
-                PrecoNaCompra = produto.Preco
+                TempData["Error"] = "Erro: Carrinho vazio.";
+                return RedirectToAction("Index", "Home");
+            }
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new Exception("Usuário não autenticado.");
+            decimal totalPedido = carrinhoItens != null ? _carrinhoServico.ObterTotal(carrinhoItens) : 0.00m;
+
+            var novoPedido = new Pedido
+            {
+                UsuarioId = userId,
+                DataPedido = DateTime.Now,
+                TotalPedido = totalPedido,
+                Status = "Processando",
+                // Dados de Endereço do Formulário
+                NomeCliente = pedido.NomeCliente,
+                Endereco = pedido.Endereco,
+                Cidade = pedido.Cidade
             };
 
-            encomenda.ItensEncomenda.Add(itemEncomenda);
+            _context.Pedidos.Add(novoPedido);
+            await _context.SaveChangesAsync();
+
+            foreach (ItemCarrinho itemCarrinho in carrinhoItens)
+            {
+                if (itemCarrinho.Produto == null)
+                    continue;
+
+                var itemPedido = new ItemPedido
+                {
+                    PedidoId = novoPedido.Id,
+                    ProdutoId = itemCarrinho.Produto!.Id,
+                    Quantidade = itemCarrinho.Quantidade,
+                    PrecoUnitario = itemCarrinho.Produto.Preco
+                };
+                _context.ItensPedido.Add(itemPedido);
+
+                var produto = await _context.Produtos.FindAsync(itemCarrinho.Produto.Id);
+                if (produto != null)
+                {
+                    produto.Estoque -= itemCarrinho.Quantidade;
+                    if (produto.Estoque < 0) produto.Estoque = 0;
+                    _context.Update(produto);
+                }
+            }
+            TempData["Success"] = $"Pedido #{novoPedido.Id} realizado com sucesso!";
+        }
+        catch
+        {
+            _context.ChangeTracker.Clear();
+        }
+        finally
+        {
+            await _context.SaveChangesAsync();
+            _carrinhoServico.LimparCarrinho();
         }
 
-        _context.Encomendas.Add(encomenda);
-        await _context.SaveChangesAsync();
-
-        _carrinhoServico.LimparCarrinho();
-        return RedirectToAction("Confirmacao", new { id = encomenda.Id });
-    }
-
-    public IActionResult Confirmacao(int id)
-    {
-        ViewData["EncomendaId"] = id;
-        return View();
+        return RedirectToAction("MeusPedidos", "Pedidos");
     }
 }

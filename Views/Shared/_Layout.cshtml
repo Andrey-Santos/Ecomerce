@@ -33,6 +33,13 @@
                             <a class="nav-link text-dark" asp-area="" asp-controller="Produtos"
                                 asp-action="Index">Produtos</a>
                         </li>
+                        @if (User.Identity!.IsAuthenticated)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Pedidos"
+                                    asp-action="MeusPedidos">Meus Pedidos</a>
+                            </li>
+                        }
                     </ul>
                     <ul class="navbar-nav flex-grow-1 justify-content-end">
                         <li class="nav-item">

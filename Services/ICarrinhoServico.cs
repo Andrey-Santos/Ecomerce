@@ -7,6 +7,7 @@ namespace Ecomerce.Services
         void AdicionarItem(int produtoId, int quantidade);
         void RemoverItem(int produtoId);
         List<ItemCarrinho> ObterItens();
+        Task<List<ItemCarrinho>> ObterDetalhesDoCarrinho();
         void LimparCarrinho();
         decimal ObterTotal(List<ItemCarrinho> itens);
     }

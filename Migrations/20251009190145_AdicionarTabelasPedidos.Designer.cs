@@ -4,6 +4,7 @@ using Ecomerce.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Ecomerce.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251009190145_AdicionarTabelasPedidos")]
+    partial class AdicionarTabelasPedidos
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,6 +24,67 @@ namespace Ecomerce.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("Ecomerce.Models.Encomenda", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Cidade")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("DataEncomenda")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("EncomendaTotal")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Endereco")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NomeCliente")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UtilizadorId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Encomendas");
+                });
+
+            modelBuilder.Entity("Ecomerce.Models.ItemEncomenda", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("EncomendaId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("PrecoNaCompra")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.Property<int>("ProdutoId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Quantidade")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EncomendaId");
+
+                    b.ToTable("ItensEncomenda");
+                });
 
             modelBuilder.Entity("Ecomerce.Models.ItemPedido", b =>
                 {
@@ -59,20 +123,8 @@ namespace Ecomerce.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Cidade")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTime>("DataPedido")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("Endereco")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("NomeCliente")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -322,6 +374,17 @@ namespace Ecomerce.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("Ecomerce.Models.ItemEncomenda", b =>
+                {
+                    b.HasOne("Ecomerce.Models.Encomenda", "Encomenda")
+                        .WithMany("ItensEncomenda")
+                        .HasForeignKey("EncomendaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Encomenda");
+                });
+
             modelBuilder.Entity("Ecomerce.Models.ItemPedido", b =>
                 {
                     b.HasOne("Ecomerce.Models.Pedido", "Pedido")
@@ -401,6 +464,11 @@ namespace Ecomerce.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Ecomerce.Models.Encomenda", b =>
+                {
+                    b.Navigation("ItensEncomenda");
                 });
 
             modelBuilder.Entity("Ecomerce.Models.Pedido", b =>
