@@ -17,7 +17,9 @@ namespace Ecomerce.Controllers
             _hostEnvironment = hostEnvironment;
         }
 
-        // GET: Produtos
+        [HttpGet]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Index()
         {
             return View(await _context.Produtos.ToListAsync());
@@ -47,7 +49,7 @@ namespace Ecomerce.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin")] // Garanta que apenas admins podem criar
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([Bind("Id,Nome,Descricao,Preco,Estoque,ImagemUpload")] Produto produto)
         {
             ModelState.Remove("ImagemUrl");
@@ -85,7 +87,9 @@ namespace Ecomerce.Controllers
             return View(produto);
         }
 
-        // GET: Produtos/Edit/5
+        [HttpGet]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -101,11 +105,9 @@ namespace Ecomerce.Controllers
             return View(produto);
         }
 
-        // POST: Produtos/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Nome,Descricao,Preco,ImagemUrl,Estoque")] Produto produto)
         {
             if (id != produto.Id)
@@ -136,7 +138,9 @@ namespace Ecomerce.Controllers
             return View(produto);
         }
 
-        // GET: Produtos/Delete/5
+        [HttpGet]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -154,9 +158,9 @@ namespace Ecomerce.Controllers
             return View(produto);
         }
 
-        // POST: Produtos/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var produto = await _context.Produtos.FindAsync(id);

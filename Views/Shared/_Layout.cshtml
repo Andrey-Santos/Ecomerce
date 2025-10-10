@@ -29,15 +29,36 @@
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home"
                                 asp-action="Privacy">Privacy</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Produtos"
-                                asp-action="Index">Produtos</a>
-                        </li>
+
                         @if (User.Identity!.IsAuthenticated)
                         {
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-area="" asp-controller="Pedidos"
                                     asp-action="MeusPedidos">Meus Pedidos</a>
+                            </li>
+                        }
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle text-dark" href="#" id="navbarAdminDropdown"
+                                    role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    **Área do Administrador**
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="navbarAdminDropdown">
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Pedidos" asp-action="AguardandoSaida">
+                                            <i class="fas fa-box"></i> Pedidos Aguardando Saída
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Produtos" asp-action="Index">
+                                            <i class="fas fa-box-open"></i> Gerenciar Produtos
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <hr class="dropdown-divider">
+                                    </li>
+                                </ul>
                             </li>
                         }
                     </ul>

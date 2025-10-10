@@ -1,0 +1,84 @@
+@model Pedido
+
+@{
+    ViewData["Title"] = $"Detalhes do Pedido #{Model.Id}";
+    var statusList = ViewData["StatusList"] as List<string>;
+}
+
+<h1>Detalhes do Pedido **#@Model.Id**</h1>
+<hr />
+
+<div class="row">
+    <div class="col-md-5">
+        <h4>Dados do Cliente e Envio</h4>
+        <div class="card p-3 mb-4">
+            <dl class="row">
+                <dt class="col-sm-4">Cliente:</dt>
+                <dd class="col-sm-8">@Model.Usuario.Email</dd>
+                
+                <dt class="col-sm-4">Recebedor:</dt>
+                <dd class="col-sm-8">@Model.NomeCliente</dd>
+
+                <dt class="col-sm-4">Endereço:</dt>
+                <dd class="col-sm-8">@Model.Endereco, @Model.Cidade</dd>
+                
+                <dt class="col-sm-4">Data:</dt>
+                <dd class="col-sm-8">@Model.DataPedido.ToString("dd/MM/yyyy HH:mm")</dd>
+            </dl>
+        </div>
+        
+        <h4>Gerenciar Status</h4>
+        <div class="card p-3 bg-light">
+            <form asp-action="AlterarStatus" method="post">
+                <input type="hidden" name="id" value="@Model.Id" />
+                <div class="input-group">
+                    <select name="novoStatus" class="form-select">
+                        @foreach (var status in statusList!)
+                        {
+                            <option value="@status" selected="@(status == Model.Status)">
+                                @status
+                            </option>
+                        }
+                    </select>
+                    <button type="submit" class="btn btn-warning">
+                        Atualizar Status
+                    </button>
+                </div>
+                <p class="mt-2">Status Atual: <span class="badge bg-primary">@Model.Status</span></p>
+            </form>
+        </div>
+    </div>
+    
+    <div class="col-md-7">
+        <h4>Itens da Compra</h4>
+        <table class="table table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    <th>Produto</th>
+                    <th class="text-center">Qtd</th>
+                    <th class="text-end">Preço Unit.</th>
+                    <th class="text-end">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.ItensPedido)
+                {
+                    <tr>
+                        <td>@item.Produto!.Nome</td>
+                        <td class="text-center">@item.Quantidade</td>
+                        <td class="text-end">@item.PrecoUnitario.ToString("C2")</td>
+                        <td class="text-end">@((item.Quantidade * item.PrecoUnitario).ToString("C2"))</td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr class="fw-bold">
+                    <td colspan="3" class="text-end">Total do Pedido:</td>
+                    <td class="text-end bg-info text-white">@Model.TotalPedido.ToString("C2")</td>
+                </tr>
+            </tfoot>
+        </table>
+        
+        <a asp-action="Index" class="btn btn-secondary mt-3">&laquo; Voltar à Lista</a>
+    </div>
+</div>

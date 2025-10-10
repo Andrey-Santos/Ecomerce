@@ -3,7 +3,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Ecomerce.Models
 {
-    // Esta classe define o que é um Produto na nossa loja.
     public class Produto
     {
         public int Id { get; set; }
@@ -17,7 +16,7 @@ namespace Ecomerce.Models
         public string Descricao { get; set; } = default!;
 
         [Required(ErrorMessage = "O preço é obrigatório.")]
-        [Column(TypeName = "decimal(18, 2)")] // Garante 18 dígitos no total, com 2 casas decimais.
+        [Column(TypeName = "decimal(18, 2)")]
         [Range(0.01, double.MaxValue, ErrorMessage = "O preço deve ser maior que zero.")]
         [Display(Name = "Preço")] 
         public decimal Preco { get; set; }
@@ -26,7 +25,7 @@ namespace Ecomerce.Models
         public string ImagemUrl { get; set; } = default!;
         
         [NotMapped]
-        public IFormFile? ImagemUpload { get; set; } 
+        public IFormFile ImagemUpload { get; set; } 
     
         [Required]
         [Range(0, int.MaxValue, ErrorMessage = "O estoque não pode ser negativo.")]
