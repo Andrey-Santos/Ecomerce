@@ -11,11 +11,6 @@
 <h4>Detalhes para Envio</h4>
 <hr />
 
-@if (TempData["MensagemErro"] != null)
-{
-    <div class="alert alert-danger">@TempData["MensagemErro"]</div>
-}
-
 <div class="row">
     <div class="col-md-6">
         <form asp-action="Index" method="post">

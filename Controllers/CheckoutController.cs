@@ -5,6 +5,7 @@ using Ecomerce.Services;
 using System.Security.Claims;
 using Ecomerce.Data;
 using Ecomerce.Models;
+using Ecomerce.Extensoes;
 
 [Authorize]
 public class CheckoutController : Controller
@@ -30,7 +31,12 @@ public class CheckoutController : Controller
 
         if (!carrinhoItens.Any())
         {
-            TempData["Error"] = "Seu carrinho está vazio.";
+            TempData.Put("Notificacao", new Notificacao
+            {
+                Tipo = "Success",
+                Mensagem = "Seu carrinho está vazio."
+            });
+
             return RedirectToAction("Index", "Home");
         }
 
@@ -56,7 +62,12 @@ public class CheckoutController : Controller
 
             if (!carrinhoItens.Any())
             {
-                TempData["Error"] = "Erro: Carrinho vazio.";
+                TempData.Put("Notificacao", new Notificacao
+                {
+                    Tipo = "Success",
+                    Mensagem = "Erro: Carrinho vazio."
+                });
+
                 return RedirectToAction("Index", "Home");
             }
 
@@ -100,7 +111,13 @@ public class CheckoutController : Controller
                     _context.Update(produto);
                 }
             }
-            TempData["Success"] = $"Pedido #{novoPedido.Id} realizado com sucesso!";
+
+            TempData.Put("Notificacao", new Notificacao
+            {
+                Tipo = "Success",
+                Mensagem = $"Pedido #{novoPedido.Id} realizado com sucesso!"
+            });
+
         }
         catch
         {

@@ -6,6 +6,7 @@ using System.Security.Claims;
 using Ecomerce.Data;
 using Ecomerce.Services;
 using Ecomerce.Models;
+using Ecomerce.Extensoes;
 
 namespace Ecomerce.Controllers;
 
@@ -85,7 +86,11 @@ public class PedidosController : Controller
 
         if (pedido == null)
         {
-            TempData["Error"] = "Pedido não encontrado.";
+            TempData.Put("Notificacao", new Notificacao
+            {
+                Tipo = "Error",
+                Mensagem = "Pedido não encontrado."
+            });
             return RedirectToAction(nameof(Index));
         }
 
@@ -94,7 +99,12 @@ public class PedidosController : Controller
         _context.Update(pedido);
         await _context.SaveChangesAsync();
 
-        TempData["Success"] = $"Status do Pedido #{id} alterado para **{novoStatus}** com sucesso!";
+        TempData.Put("Notificacao", new Notificacao
+        {
+            Tipo = "Success",
+            Mensagem = $"Status do Pedido #{id} alterado para **{novoStatus}** com sucesso!"
+        });
+
         return RedirectToAction(nameof(DetalhesAdmin), new { id = id });
     }
 }

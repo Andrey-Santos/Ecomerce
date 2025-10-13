@@ -55,9 +55,6 @@
                                             <i class="fas fa-box-open"></i> Gerenciar Produtos
                                         </a>
                                     </li>
-                                    <li>
-                                        <hr class="dropdown-divider">
-                                    </li>
                                 </ul>
                             </li>
                         }
@@ -87,6 +84,7 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <partial name="_NotificacoesToast" /> 
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 
