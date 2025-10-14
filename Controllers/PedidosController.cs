@@ -42,15 +42,30 @@ public class PedidosController : Controller
 
     [HttpGet]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> AguardandoSaida()
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> Index(string statusFilter)
     {
-        var pedidos = await _context.Pedidos
+        IQueryable<Pedido> pedidosQuery = _context.Pedidos
             .Include(p => p.Usuario)
-            .Where(p => p.Status == "Processando")
+            .AsQueryable();
+
+        ViewData["PedidosProcessando"] = await pedidosQuery.CountAsync(p => p.Status == "Processando");
+
+        var dataLimite = DateTime.Now.AddDays(-7);
+        ViewData["TotalUltimos7Dias"] = await pedidosQuery
+            .Where(p => p.DataPedido >= dataLimite && (p.Status == "Enviado" || p.Status == "Entregue"))
+            .SumAsync(p => (decimal?)p.TotalPedido) ?? 0.00m;
+
+        ViewData["PedidosCancelados"] = await pedidosQuery.CountAsync(p => p.Status == "Cancelado");
+
+        if (!string.IsNullOrEmpty(statusFilter) && statusFilter != "Todos")
+            pedidosQuery = pedidosQuery.Where(p => p.Status == statusFilter);
+
+        ViewData["CurrentStatus"] = statusFilter;
+
+        var pedidos = await pedidosQuery
             .OrderByDescending(p => p.DataPedido)
             .ToListAsync();
-
-        ViewData["Title"] = "Pedidos Aguardando Saída";
 
         return View(pedidos);
     }

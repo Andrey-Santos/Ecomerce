@@ -17,7 +17,7 @@ public class HomeController : Controller
         _context = context;
     }
 
-    public async Task<IActionResult> Index(string? searchString)
+    public async Task<IActionResult> Index(string searchString)
     {
         var produtosQuery = _context.Produtos
             .Where(p => p.Estoque > 0)

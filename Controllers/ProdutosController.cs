@@ -18,7 +18,6 @@ namespace Ecomerce.Controllers
         }
 
         [HttpGet]
-        [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Index()
         {
@@ -88,7 +87,6 @@ namespace Ecomerce.Controllers
         }
 
         [HttpGet]
-        [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int? id)
         {
@@ -139,7 +137,6 @@ namespace Ecomerce.Controllers
         }
 
         [HttpGet]
-        [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int? id)
         {

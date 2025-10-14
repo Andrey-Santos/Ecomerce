@@ -9,6 +9,6 @@ namespace Ecomerce.Models
 
         public int Quantidade { get; set; }
 
-        public Produto? Produto { get; set; } 
+        public Produto Produto { get; set; } 
     }
 }
