@@ -2,8 +2,5 @@
 
 <a class="nav-link text-dark" asp-area="" asp-controller="Carrinho" asp-action="Index">
     🛒 Carrinho 
-    @if (Model > 0)
-    {
-        <span class="badge bg-danger">@Model</span>
-    }
+        <span id="cart-count" class="badge bg-danger @(Model == 0 ? "d-none" : "")">@Model</span>
 </a>

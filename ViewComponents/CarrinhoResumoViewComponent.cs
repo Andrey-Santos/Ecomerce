@@ -16,7 +16,7 @@ namespace Ecomerce.ViewComponents
         {
             var itens = _carrinhoServico.ObterItens();
 
-            int totalItens = itens.Sum(i => i.Quantidade);
+            int totalItens = itens.Count();
 
             return View(totalItens);
         }

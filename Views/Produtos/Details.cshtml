@@ -33,7 +33,9 @@
 
         @if (Model.Estoque > 0)
         {
-            <form asp-controller="Carrinho" asp-action="Adicionar" method="post" class="d-flex align-items-center">
+            @* Adicionado ID ao formulário para ser selecionado pelo JavaScript *@
+            <form id="formAdicionarCarrinho" asp-controller="Carrinho" asp-action="Adicionar" method="post"
+                class="d-flex align-items-center">
                 <input type="hidden" name="id" value="@Model.Id" />
 
                 <div class="me-3">
@@ -42,7 +44,8 @@
                         class="form-control" style="width: 80px;" />
                 </div>
 
-                <button type="submit" class="btn btn-lg btn-primary flex-grow-1">
+                @* Adicionado ID ao botão para feedback de carregamento *@
+                <button type="submit" id="btnAdicionar" class="btn btn-lg btn-primary flex-grow-1">
                     <i class="fa fa-cart-plus"></i> Adicionar ao Carrinho
                 </button>
             </form>
@@ -59,3 +62,75 @@
         <i class="fa fa-arrow-left"></i> Voltar à Home
     </a>
 </div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#formAdicionarCarrinho').submit(function (e) {
+                e.preventDefault();
+
+                var form = $(this);
+                var formData = form.serialize();
+                var btn = $('#btnAdicionar');
+                var originalHtml = btn.html();
+
+                btn.attr('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Adicionando...');
+
+                $.ajax({
+                    type: "POST",
+                    url: form.attr('action'),
+                    data: formData,
+                    success: function (response) {
+                        if (response.success) {
+                            btn.attr('disabled', false).html(originalHtml);
+                            exibirToast("Produto adicionado ao carrinho!", "bg-success");
+
+                            if (response.totalItens !== undefined) {
+                                var cartCountElement = $('#cart-count');
+                                cartCountElement.text(response.totalItens);
+
+                                if (response.totalItens > 0) {
+                                    cartCountElement.removeClass('d-none');
+                                } else {
+                                    cartCountElement.addClass('d-none');
+                                }
+                            }
+                        } else {
+                            btn.attr('disabled', false).html(originalHtml);
+                            exibirToast(response.message || "Não foi possível adicionar ao carrinho.", "bg-danger");
+                        }
+                    },
+                    error: function () {
+                        btn.attr('disabled', false).html(originalHtml);
+                        exibirToast("Erro de conexão ao servidor.", "bg-danger");
+                    }
+                });
+            });
+
+            function exibirToast(mensagem, bgClass) {
+                var toastHtml = `
+                                    <div aria-live="polite" aria-atomic="true" class="position-relative">
+                                        <div class="toast-container position-fixed top-0 end-0 p-3">
+                                            <div class="toast align-items-center text-white ${bgClass} border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="4000">
+                                                <div class="d-flex">
+                                                    <div class="toast-body">${mensagem}</div>
+                                                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>`;
+
+                $('body').append(toastHtml);
+                var toastEl = document.querySelector('.toast.text-white');
+
+                if (toastEl) {
+                    var toast = new bootstrap.Toast(toastEl);
+                    toast.show();
+                    toastEl.addEventListener('hidden.bs.toast', function () {
+                        toastEl.remove();
+                    });
+                }
+            }
+        });
+    </script>
+}

@@ -46,14 +46,19 @@ namespace Ecomerce.Controllers
         [HttpPost]
         public IActionResult Adicionar(int id, int quantidade = 1)
         {
-            if (id <= 0)
-            {
-                return NotFound();
-            }
+            var produto = _context.Produtos.Find(id);
+
+            if (produto == null)
+                return Json(new { success = false, message = "Produto não encontrado." });
+
 
             _carrinhoServico.AdicionarItem(id, quantidade);
-
-            return RedirectToAction("Index");
+            return Json(new
+            {
+                success = true,
+                message = "Produto adicionado ao carrinho com sucesso!",
+                totalItens = _carrinhoServico.ObterItens().Count()
+            });
         }
 
         [HttpPost]
