@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Ecomerce.Data;
 using Ecomerce.Models;
 using Microsoft.AspNetCore.Authorization;
+using Ecomerce.Extensoes;
 
 namespace Ecomerce.Controllers
 {
@@ -52,29 +53,22 @@ namespace Ecomerce.Controllers
         public async Task<IActionResult> Create([Bind("Id,Nome,Descricao,Preco,Estoque,ImagemUpload")] Produto produto)
         {
             ModelState.Remove("ImagemUrl");
-            
+
             if (ModelState.IsValid)
             {
                 if (produto.ImagemUpload != null)
                 {
-                    // 1. Define o caminho: wwwroot/imagens/
                     string wwwRootPath = _hostEnvironment.WebRootPath;
                     string path = Path.Combine(wwwRootPath, "imagens");
 
-                    // 2. Garante que a pasta existe
                     if (!Directory.Exists(path)) Directory.CreateDirectory(path);
 
-                    // 3. Gera um nome de ficheiro único (para evitar conflitos)
                     string fileName = Guid.NewGuid().ToString() + Path.GetExtension(produto.ImagemUpload.FileName);
                     string filePath = Path.Combine(path, fileName);
 
-                    // 4. Salva o ficheiro no disco
                     using (var fileStream = new FileStream(filePath, FileMode.Create))
-                    {
                         await produto.ImagemUpload.CopyToAsync(fileStream);
-                    }
 
-                    // 5. Salva o URL relativo no Modelo (para ir para o DB)
                     produto.ImagemUrl = "/imagens/" + fileName;
                 }
 
@@ -106,34 +100,62 @@ namespace Ecomerce.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Nome,Descricao,Preco,ImagemUrl,Estoque")] Produto produto)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Nome,Descricao,Preco,Estoque,CategoriaId,ImagemUrl,ImagemUpload")] Produto produto)
         {
             if (id != produto.Id)
-            {
                 return NotFound();
-            }
 
-            if (ModelState.IsValid)
+            var produtoOriginal = await _context.Produtos
+                .AsNoTracking()
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            if (produtoOriginal == null)
+                return NotFound();
+
+            if (!ModelState.IsValid)
+                return View(produto);
+
+            try
             {
-                try
+                string wwwRootPath = _hostEnvironment.WebRootPath;
+
+                if (produto.ImagemUpload != null)
                 {
-                    _context.Update(produto);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!ProdutoExists(produto.Id))
+                    string uploadPath = Path.Combine(wwwRootPath, "imagens");
+                    string nomeArquivo = Guid.NewGuid().ToString() + Path.GetExtension(produto.ImagemUpload.FileName);
+                    string filePath = Path.Combine(uploadPath, nomeArquivo);
+
+                    using (var fileStream = new FileStream(filePath, FileMode.Create))
+                        await produto.ImagemUpload.CopyToAsync(fileStream);
+
+                    produto.ImagemUrl = $"/imagens/{nomeArquivo}";
+
+                    if (!string.IsNullOrEmpty(produtoOriginal.ImagemUrl))
                     {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
+                        var caminhoAntigo = Path.Combine(wwwRootPath, produtoOriginal.ImagemUrl.TrimStart('/'));
+
+                        if (System.IO.File.Exists(caminhoAntigo))
+                        {
+                            System.IO.File.Delete(caminhoAntigo);
+                        }
                     }
                 }
-                return RedirectToAction(nameof(Index));
+                else
+                    produto.ImagemUrl = produtoOriginal.ImagemUrl;
+
+                _context.Update(produto);
+                await _context.SaveChangesAsync();
+
+                TempData.Put("Notificacao", new Notificacao { Tipo = "Success", Mensagem = $"Produto '{produto.Nome}' atualizado com sucesso." });
             }
-            return View(produto);
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!_context.Produtos.Any(e => e.Id == produto.Id))
+                    return NotFound();
+                else
+                    throw;
+            }
+            return RedirectToAction(nameof(Index));
         }
 
         [HttpGet]
