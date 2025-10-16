@@ -4,63 +4,65 @@
     ViewData["Title"] = Model.Nome;
 }
 
-<div class="row mt-4">
-    <div class="col-md-5">
-        <div class="card shadow-sm border-0">
-            <img src="@Model.ImagemUrl" class="card-img-top" alt="@Model.Nome"
-                style="max-height: 500px; object-fit: contain; padding: 15px;">
-        </div>
-    </div>
+<div class="container mt-5">
+    <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+        <div class="row g-0">
+            <!-- Imagem do Produto -->
+            <div class="col-md-5 bg-light d-flex align-items-center justify-content-center p-4">
+                <img src="@Model.ImagemUrl" class="img-fluid rounded-3 shadow-sm" alt="@Model.Nome"
+                    style="max-height: 450px; object-fit: contain;">
+            </div>
 
-    <div class="col-md-7">
-        <h1 class="display-4">@Model.Nome</h1>
-        <hr />
+            <!-- Detalhes do Produto -->
+            <div class="col-md-7 p-4">
+                <h2 class="fw-bold">@Model.Nome</h2>
+                <p class="text-muted mb-3">@Model.Descricao</p>
+                <hr />
 
-        <p class="lead">@Model.Descricao</p>
-        <hr />
-
-        <div class="mb-4">
-            <h2 class="text-success">@Model.Preco.ToString("C2")</h2>
-            @if (Model.Estoque > 0)
-            {
-                <span class="badge bg-success">Em Estoque: @Model.Estoque</span>
-            }
-            else
-            {
-                <span class="badge bg-danger">Esgotado</span>
-            }
-        </div>
-
-        @if (Model.Estoque > 0)
-        {
-            @* Adicionado ID ao formulário para ser selecionado pelo JavaScript *@
-            <form id="formAdicionarCarrinho" asp-controller="Carrinho" asp-action="Adicionar" method="post"
-                class="d-flex align-items-center">
-                <input type="hidden" name="id" value="@Model.Id" />
-
-                <div class="me-3">
-                    <label for="quantidade" class="form-label visually-hidden">Quantidade:</label>
-                    <input type="number" name="quantidade" id="quantidade" value="1" min="1" max="@Model.Estoque"
-                        class="form-control" style="width: 80px;" />
+                <div class="d-flex align-items-center mb-4">
+                    <h3 class="text-success fw-bold me-3 mb-0">@Model.Preco.ToString("C2")</h3>
+                    @if (Model.Estoque > 0)
+                    {
+                        <span class="badge bg-success fs-6">Em estoque: @Model.Estoque</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger fs-6">Esgotado</span>
+                    }
                 </div>
 
-                @* Adicionado ID ao botão para feedback de carregamento *@
-                <button type="submit" id="btnAdicionar" class="btn btn-lg btn-primary flex-grow-1">
-                    <i class="fa fa-cart-plus"></i> Adicionar ao Carrinho
-                </button>
-            </form>
-        }
-        else
-        {
-            <button type="button" class="btn btn-lg btn-secondary" disabled>Produto Indisponível</button>
-        }
-    </div>
-</div>
+                @if (Model.Estoque > 0)
+                {
+                    <form id="formAdicionarCarrinho" asp-controller="Carrinho" asp-action="Adicionar" method="post"
+                        class="d-flex align-items-center">
+                        <input type="hidden" name="id" value="@Model.Id" />
 
-<div class="mt-5">
-    <a asp-action="Index" asp-controller="Home" class="btn btn-outline-secondary">
-        <i class="fa fa-arrow-left"></i> Voltar à Home
-    </a>
+                        <div class="me-3">
+                            <label for="quantidade" class="form-label visually-hidden">Quantidade:</label>
+                            <input type="number" name="quantidade" id="quantidade" value="1" min="1" max="@Model.Estoque"
+                                class="form-control shadow-sm text-center" style="width: 80px;" />
+                        </div>
+
+                        <button type="submit" id="btnAdicionar" class="btn btn-lg btn-primary flex-grow-1 shadow-sm">
+                            <i class="bi bi-cart-plus"></i> Adicionar ao Carrinho
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <button type="button" class="btn btn-lg btn-secondary w-100" disabled>
+                        <i class="bi bi-x-circle"></i> Produto Indisponível
+                    </button>
+                }
+
+                <div class="mt-5">
+                    <a asp-action="Index" asp-controller="Home" class="btn btn-outline-secondary px-4">
+                        <i class="bi bi-arrow-left"></i> Voltar à Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 @section Scripts {
@@ -109,16 +111,18 @@
 
             function exibirToast(mensagem, bgClass) {
                 var toastHtml = `
-                                    <div aria-live="polite" aria-atomic="true" class="position-relative">
-                                        <div class="toast-container position-fixed top-0 end-0 p-3">
-                                            <div class="toast align-items-center text-white ${bgClass} border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="4000">
-                                                <div class="d-flex">
-                                                    <div class="toast-body">${mensagem}</div>
-                                                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>`;
+                        <div aria-live="polite" aria-atomic="true" class="position-relative">
+                            <div class="toast-container position-fixed top-0 end-0 p-3">
+                                <div class="toast align-items-center text-white ${bgClass} border-0 shadow-sm"
+                                     role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="4000">
+                                    <div class="d-flex">
+                                        <div class="toast-body">${mensagem}</div>
+                                        <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                                                data-bs-dismiss="toast" aria-label="Close"></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>`;
 
                 $('body').append(toastHtml);
                 var toastEl = document.querySelector('.toast.text-white');
