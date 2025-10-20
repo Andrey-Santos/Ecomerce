@@ -1,7 +1,7 @@
 using Ecomerce.Data;
 using Ecomerce.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json; 
+using System.Text.Json;
 
 namespace Ecomerce.Services
 {
@@ -14,7 +14,7 @@ namespace Ecomerce.Services
         public CarrinhoServico(IHttpContextAccessor httpContextAccessor, ApplicationDbContext context)
         {
             _httpContextAccessor = httpContextAccessor;
-            _context = context; 
+            _context = context;
         }
 
         private List<ItemCarrinho> ObterCarrinhoDaSessao()
@@ -23,7 +23,7 @@ namespace Ecomerce.Services
             if (context == null) return new List<ItemCarrinho>();
 
             var carrinhoJson = context.Session.GetString(ChaveCarrinho);
-            
+
             return string.IsNullOrEmpty(carrinhoJson)
                 ? new List<ItemCarrinho>()
                 : JsonSerializer.Deserialize<List<ItemCarrinho>>(carrinhoJson) ?? new List<ItemCarrinho>();
@@ -42,38 +42,82 @@ namespace Ecomerce.Services
         {
             return ObterCarrinhoDaSessao();
         }
-        
+
         public async Task<List<ItemCarrinho>> ObterDetalhesDoCarrinho()
         {
             var carrinhoItens = ObterItens();
 
+            var variacaoIds = carrinhoItens.Select(i => i.VariacaoId).ToList();
+
+            var variacoesComProdutos = await _context.Variacoes
+                                                     .Include(v => v.Produto)
+                                                     .Where(v => variacaoIds.Contains(v.Id))
+                                                     .ToListAsync();
+
             foreach (var item in carrinhoItens)
-                item.Produto = await _context.Produtos.FirstOrDefaultAsync(p => p.Id == item.ProdutoId);
+            {
+                var variacao = variacoesComProdutos.FirstOrDefault(v => v.Id == item.VariacaoId);
+
+                if (variacao != null && variacao.Produto != null)
+                {
+                    item.Produto = variacao.Produto;
+                    item.ProdutoId = variacao.ProdutoId;
+                    item.NomeVariacao = variacao.Nome;
+                }
+                else
+                {
+                    item.Produto = new Produto { Nome = "Produto Indisponível" };
+                    item.NomeVariacao = "Sabor Indisponível";
+                }
+            }
 
             return carrinhoItens;
         }
 
-        public void AdicionarItem(int produtoId, int quantidade)
+        public async Task<string> AdicionarItem(int variacaoId, int quantidade)
         {
-            var carrinho = ObterCarrinhoDaSessao();
-            var item = carrinho.FirstOrDefault(i => i.ProdutoId == produtoId);
+            if (quantidade <= 0) return "Quantidade deve ser maior que zero.";
 
-            if (item != null)
+            var variacao = await _context.Variacoes
+                                         .Include(v => v.Produto)
+                                         .FirstOrDefaultAsync(v => v.Id == variacaoId);
+
+            if (variacao == null || variacao.Produto == null)
+                return "Sabor selecionado não encontrado ou produto associado indisponível.";
+
+            if (variacao.Estoque < quantidade)
+                return $"Estoque insuficiente para o sabor '{variacao.Nome}'. Disponível: {variacao.Estoque}.";
+
+            var carrinho = ObterCarrinhoDaSessao();
+            var itemExistente = carrinho.FirstOrDefault(i => i.VariacaoId == variacaoId);
+
+            if (itemExistente != null)
             {
-                item.Quantidade += quantidade;
+                if (variacao.Estoque < itemExistente.Quantidade + quantidade)
+                    return $"Adição não permitida. O novo total excede o estoque ({variacao.Estoque}).";
+
+                itemExistente.Quantidade += quantidade;
             }
             else
             {
-                carrinho.Add(new ItemCarrinho { ProdutoId = produtoId, Quantidade = quantidade });
+                var novoProduto = new ItemCarrinho
+                {
+                    VariacaoId = variacaoId,
+                    ProdutoId = variacao.ProdutoId,
+                    Quantidade = quantidade,
+                };
+                carrinho.Add(novoProduto);
             }
 
             GuardarCarrinhoNaSessao(carrinho);
+
+            return null;
         }
 
-        public void RemoverItem(int produtoId)
+        public void RemoverItem(int variacaoId)
         {
             var carrinho = ObterCarrinhoDaSessao();
-            var item = carrinho.FirstOrDefault(i => i.ProdutoId == produtoId);
+            var item = carrinho.FirstOrDefault(i => i.VariacaoId == variacaoId);
 
             if (item != null)
             {
@@ -81,29 +125,34 @@ namespace Ecomerce.Services
                 GuardarCarrinhoNaSessao(carrinho);
             }
         }
-        
+
         public void LimparCarrinho()
         {
             _httpContextAccessor.HttpContext?.Session.Remove(ChaveCarrinho);
         }
 
-        public decimal ObterTotal(List<ItemCarrinho> itens) 
+        public decimal ObterTotal(List<ItemCarrinho> itens)
         {
             decimal total = 0;
-            
-            var produtoIds = itens.Select(i => i.ProdutoId).ToList();
-            var produtos = _context.Produtos.Where(p => produtoIds.Contains(p.Id)).ToList();
-            
+
+            var variacaoIds = itens.Select(i => i.VariacaoId).ToList();
+
+            var variacoesComProdutos = _context.Variacoes
+                .Include(v => v.Produto)
+                .Where(v => variacaoIds.Contains(v.Id))
+                .ToList();
+
             foreach (var item in itens)
             {
-                var produto = produtos.FirstOrDefault(p => p.Id == item.ProdutoId);
-                if (produto != null)
+                var variacao = variacoesComProdutos.FirstOrDefault(v => v.Id == item.VariacaoId);
+
+                if (variacao != null && variacao.Produto != null)
                 {
-                    total += produto.Preco * item.Quantidade;
+                    total += variacao.Produto.Preco * item.Quantidade;
                 }
             }
-            
+
             return total;
         }
     }
-};
+}

@@ -26,10 +26,7 @@ namespace Ecomerce.Models
         
         [NotMapped]
         public IFormFile ImagemUpload { get; set; } 
-    
-        [Required]
-        [Range(0, int.MaxValue, ErrorMessage = "O estoque não pode ser negativo.")]
-        [Display(Name = "Estoque Disponível")] 
-        public int Estoque { get; set; }
+        
+        public ICollection<Variacao> Variacoes { get; set; } = new List<Variacao>();
     }
 }

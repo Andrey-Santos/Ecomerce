@@ -22,22 +22,24 @@ namespace Ecomerce.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Produtos.ToListAsync());
+            var produto = await _context.Produtos
+                                        .Include(p => p.Variacoes)
+                                        .ToListAsync();
+
+            return View(produto);
         }
 
-        // GET: Produtos/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
-            {
                 return NotFound();
-            }
 
-            var produto = await _context.Produtos.FirstOrDefaultAsync(m => m.Id == id);
+            var produto = await _context.Produtos
+                .Include(p => p.Variacoes.Where(v => v.Estoque > 0))
+                .FirstOrDefaultAsync(m => m.Id == id);
+
             if (produto == null)
-            {
                 return NotFound();
-            }
 
             return View(produto);
         }
@@ -50,7 +52,7 @@ namespace Ecomerce.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Create([Bind("Id,Nome,Descricao,Preco,Estoque,ImagemUpload")] Produto produto)
+        public async Task<IActionResult> Create([Bind("Id,Nome,Descricao,Preco,ImagemUpload")] Produto produto)
         {
             ModelState.Remove("ImagemUrl");
 
@@ -72,12 +74,12 @@ namespace Ecomerce.Controllers
                     produto.ImagemUrl = "/imagens/" + fileName;
                 }
 
-                // 6. Salva o Produto no DB
                 _context.Add(produto);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            return View(produto);
+
+            return RedirectToAction("GerenciarVariacoes", new { id = produto.Id });
         }
 
         [HttpGet]
@@ -100,7 +102,7 @@ namespace Ecomerce.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Nome,Descricao,Preco,Estoque,CategoriaId,ImagemUrl,ImagemUpload")] Produto produto)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Nome,Descricao,Preco,CategoriaId,ImagemUrl,ImagemUpload")] Produto produto)
         {
             if (id != produto.Id)
                 return NotFound();
@@ -155,7 +157,8 @@ namespace Ecomerce.Controllers
                 else
                     throw;
             }
-            return RedirectToAction(nameof(Index));
+
+            return RedirectToAction("GerenciarVariacoes", new { id = produto.Id });
         }
 
         [HttpGet]
@@ -192,9 +195,93 @@ namespace Ecomerce.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        private bool ProdutoExists(int id)
+        [HttpGet]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GerenciarVariacoes(int? id)
         {
-            return _context.Produtos.Any(e => e.Id == id);
+            if (id == null)
+                return NotFound();
+
+            var produto = await _context.Produtos
+                                        .Include(p => p.Variacoes)
+                                        .FirstOrDefaultAsync(m => m.Id == id);
+
+            if (produto == null)
+                return NotFound();
+
+            ViewData["ProdutoNome"] = produto.Nome;
+
+            return View(produto);
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SalvarVariacoes(Produto produto, string action)
+        {
+            var produtoAtual = await _context.Produtos
+                .Include(p => p.Variacoes)
+                .FirstOrDefaultAsync(p => p.Id == produto.Id);
+
+            if (produtoAtual == null)
+            {
+                TempData.Put("Notificacao", new Notificacao { Tipo = "Error", Mensagem = "Produto mestre não encontrado." });
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (action.StartsWith("delete-"))
+            {
+                var variacaoIdParaDeletar = int.Parse(action.Split('-')[1]);
+
+                var variacaoParaRemover = produtoAtual.Variacoes.FirstOrDefault(v => v.Id == variacaoIdParaDeletar);
+
+                if (variacaoParaRemover != null)
+                {
+                    _context.Variacoes.Remove(variacaoParaRemover);
+                    await _context.SaveChangesAsync();
+                    TempData.Put("Notificacao", new Notificacao { Tipo = "Success", Mensagem = "Sabor excluído com sucesso." });
+                }
+                else
+                {
+                    TempData.Put("Notificacao", new Notificacao { Tipo = "Error", Mensagem = "Sabor não encontrado para exclusão." });
+                }
+
+                return RedirectToAction(nameof(GerenciarVariacoes), new { id = produto.Id });
+            }
+
+
+            if (produto.Variacoes == null)
+            {
+                TempData.Put("Notificacao", new Notificacao { Tipo = "Warning", Mensagem = "Nenhuma variação enviada para processamento." });
+                return RedirectToAction(nameof(GerenciarVariacoes), new { id = produto.Id });
+            }
+
+            foreach (var variacaoEnviada in produto.Variacoes.Where(v => v.Nome != null))
+            {
+                variacaoEnviada.ProdutoId = produto.Id;
+
+                if (variacaoEnviada.Id == 0)
+                {
+                    if (action == "add")
+                        produtoAtual.Variacoes.Add(variacaoEnviada);
+                }
+                else
+                {
+                    var variacaoExistente = produtoAtual.Variacoes.FirstOrDefault(v => v.Id == variacaoEnviada.Id);
+
+                    if (variacaoExistente != null)
+                    {
+                        variacaoExistente.Nome = variacaoEnviada.Nome;
+                        variacaoExistente.Estoque = variacaoEnviada.Estoque;
+                    }
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            TempData.Put("Notificacao", new Notificacao { Tipo = "Success", Mensagem = "Variações salvas com sucesso." });
+
+            // Redireciona de volta para a tela de gerenciamento
+            return RedirectToAction(nameof(GerenciarVariacoes), new { id = produto.Id });
         }
     }
 }

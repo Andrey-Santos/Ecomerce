@@ -1,79 +1,102 @@
-@model IEnumerable<Ecomerce.Models.ItemCarrinho>
+@model List<Ecomerce.Models.ItemCarrinho>
+@using System.Globalization
+@inject Ecomerce.Services.ICarrinhoServico CarrinhoServico
 
 @{
     ViewData["Title"] = "Seu Carrinho de Compras";
-    decimal total = ViewData["CarrinhoTotal"] as decimal? ?? 0;
+    var totalGeral = CarrinhoServico.ObterTotal(Model);
 }
 
-<div class="container my-5">
-    <div class="card shadow-lg border-0">
-        <div class="card-header bg-primary text-white">
-            <h3 class="mb-0">@ViewData["Title"]</h3>
+<h1>Seu Carrinho de Compras</h1>
+<hr />
+
+@if (Model == null || !Model.Any())
+{
+    <div class="alert alert-warning" role="alert">
+        Seu carrinho está vazio. Adicione alguns produtos!
+    </div>
+    <a asp-controller="Home" asp-action="Index" class="btn btn-primary">Voltar às Compras</a>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-9">
+            <table class="table table-striped table-hover">
+                <thead class="bg-light">
+                    <tr>
+                        <th style="width: 100px;">Produto</th>
+                        <th>Detalhes</th>
+                        <th style="width: 150px;">Preço Unitário</th>
+                        <th style="width: 100px;">Quantidade</th>
+                        <th style="width: 150px;">Subtotal</th>
+                        <th style="width: 50px;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (ItemCarrinho item in Model)
+                    {
+                        Produto produto = item.Produto; 
+
+                        if (produto != null)
+                        {
+                            <tr>
+                                <td>
+                                    <img src="@produto.ImagemUrl" alt="@produto.Nome" style="width: 80px; height: 80px; object-fit: cover;" class="img-thumbnail" />
+                                </td>
+                                <td>
+                                    <h5 class="mb-1">@produto.Nome</h5>
+                                    @if (!string.IsNullOrEmpty(item.NomeVariacao))
+                                    {
+                                        <small class="text-muted">Sabor: @item.NomeVariacao</small>
+                                    }
+                                    else
+                                    {
+                                        <small class="text-danger">Sabor não especificado</small>
+                                    }
+                                </td>
+                                <td>
+                                    @produto.Preco.ToString("C", new CultureInfo("pt-BR"))
+                                </td>
+                                <td>
+                                    @item.Quantidade
+                                </td>
+                                <td>
+                                    @((produto.Preco * item.Quantidade).ToString("C", new CultureInfo("pt-BR")))
+                                </td>
+                                <td>
+                                    <form asp-controller="Carrinho" asp-action="Remover" method="post" class="d-inline">
+                                        <input type="hidden" name="variacaoId" value="@item.VariacaoId" />
+                                        <button type="submit" class="btn btn-sm btn-danger" title="Remover Item">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
         </div>
 
-        <div class="card-body">
-            @if (!Model.Any())
-            {
-                <div class="text-center my-4">
-                    <p class="lead">
-                        O seu carrinho de compras está vazio.
-                        <a asp-controller="Home" asp-action="Index" class="text-decoration-none fw-bold">
-                            Veja os nossos produtos!
-                        </a>
-                    </p>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Resumo do Pedido</h5>
+                    <hr />
+                    <div class="d-flex justify-content-between mb-3">
+                        <p class="mb-0">Subtotal:</p>
+                        <p class="mb-0 fw-bold">@totalGeral.ToString("C", new CultureInfo("pt-BR"))</p>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between h4">
+                        <p class="mb-0 fw-bold">Total Geral:</p>
+                        <p class="mb-0 text-success fw-bolder">@totalGeral.ToString("C", new CultureInfo("pt-BR"))</p>
+                    </div>
+                    
+                    <a asp-controller="Checkout" asp-action="Index" class="btn btn-success w-100 mt-3">Finalizar Compra</a>
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary w-100 mt-2">Continuar Comprando</a>
                 </div>
-            }
-            else
-            {
-                <div class="table-responsive">
-                    <table class="table table-striped align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Produto</th>
-                                <th>Preço Unitário</th>
-                                <th>Quantidade</th>
-                                <th>Subtotal</th>
-                                <th class="text-center">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var item in Model)
-                            {
-                                <tr>
-                                    <td>@item.Produto?.Nome</td>
-                                    <td>@item.Produto?.Preco.ToString("C2")</td>
-                                    <td>@item.Quantidade</td>
-                                    <td>@((item.Produto?.Preco * item.Quantidade).GetValueOrDefault().ToString("C2"))</td>
-                                    <td class="text-center">
-                                        <form asp-action="Remover" method="post" class="d-inline">
-                                            <input type="hidden" name="id" value="@item.ProdutoId" />
-                                            <button type="submit" class="btn btn-sm btn-outline-danger">
-                                                <i class="bi bi-trash"></i> Remover
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                        <tfoot class="table-light">
-                            <tr>
-                                <td colspan="3" class="text-end fw-bold">TOTAL:</td>
-                                <td class="fw-bold">@total.ToString("C2")</td>
-                                <td></td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-
-                <div class="d-flex justify-content-end mt-4 gap-2">
-                    <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">
-                        <i class="bi bi-arrow-left-circle"></i> Continuar Comprando
-                    </a>
-                    <a asp-controller="Checkout" asp-action="Index" class="btn btn-success">
-                        <i class="bi bi-check-circle"></i> Finalizar Compra
-                    </a>
-                </div>
-            }
+            </div>
         </div>
     </div>
-</div>
+}

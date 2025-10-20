@@ -20,22 +20,21 @@ public class HomeController : Controller
     public async Task<IActionResult> Index(string searchString)
     {
         var produtosQuery = _context.Produtos
-            .Where(p => p.Estoque > 0)
-            .AsQueryable();
+                                    .Include(v => v.Variacoes)
+                                    .Where(p => p.Variacoes.Any(v => v.Estoque > 0))
+                                    .AsQueryable();
 
         if (!String.IsNullOrEmpty(searchString))
         {
-            // Filtra por Nome OU Descrição. Usando Contains para LIKE do SQL
             produtosQuery = produtosQuery.Where(p => 
-                p.Nome.Contains(searchString) || 
-                p.Descricao.Contains(searchString));
+                                                p.Nome.Contains(searchString) || 
+                                                p.Descricao.Contains(searchString));
         }
 
         var produtos = await produtosQuery
-            .OrderBy(p => p.Nome)
-            .ToListAsync();
+                            .OrderBy(p => p.Nome)
+                            .ToListAsync();
         
-        // Salva o termo de busca para preencher o input na View
         ViewData["CurrentFilter"] = searchString;
 
         return View(produtos);

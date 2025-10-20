@@ -2,18 +2,19 @@
 
 @{
     ViewData["Title"] = Model.Nome;
+
+    int estoqueTotal = Model.Variacoes?.Sum(v => v.Estoque) ?? 0;
+    bool isEsgotadoTotal = estoqueTotal <= 0;
 }
 
 <div class="container mt-5">
     <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
         <div class="row g-0">
-            <!-- Imagem do Produto -->
             <div class="col-md-5 bg-light d-flex align-items-center justify-content-center p-4">
                 <img src="@Model.ImagemUrl" class="img-fluid rounded-3 shadow-sm" alt="@Model.Nome"
                     style="max-height: 450px; object-fit: contain;">
             </div>
 
-            <!-- Detalhes do Produto -->
             <div class="col-md-7 p-4">
                 <h2 class="fw-bold">@Model.Nome</h2>
                 <p class="text-muted mb-3">@Model.Descricao</p>
@@ -21,9 +22,10 @@
 
                 <div class="d-flex align-items-center mb-4">
                     <h3 class="text-success fw-bold me-3 mb-0">@Model.Preco.ToString("C2")</h3>
-                    @if (Model.Estoque > 0)
+
+                    @if (!isEsgotadoTotal)
                     {
-                        <span class="badge bg-success fs-6">Em estoque: @Model.Estoque</span>
+                        <span class="badge bg-success fs-6">Em estoque: @estoqueTotal</span>
                     }
                     else
                     {
@@ -31,19 +33,30 @@
                     }
                 </div>
 
-                @if (Model.Estoque > 0)
+                @if (!isEsgotadoTotal)
                 {
                     <form id="formAdicionarCarrinho" asp-controller="Carrinho" asp-action="Adicionar" method="post"
-                        class="d-flex align-items-center">
-                        <input type="hidden" name="id" value="@Model.Id" />
+                        class="d-flex flex-column">
 
-                        <div class="me-3">
-                            <label for="quantidade" class="form-label visually-hidden">Quantidade:</label>
-                            <input type="number" name="quantidade" id="quantidade" value="1" min="1" max="@Model.Estoque"
-                                class="form-control shadow-sm text-center" style="width: 80px;" />
+                        <div class="mb-3">
+                            <label for="VariacaoId" class="form-label fw-bold">Selecione o Sabor:</label>
+                            <select name="VariacaoId" id="VariacaoId" class="form-select shadow-sm" required>
+                                <option value="">Escolha um sabor</option>
+                                @foreach (Variacao variacao in Model.Variacoes.Where(v => v.Estoque > 0))
+                                {
+                                    <option value="@variacao.Id" data-estoque="@variacao.Estoque">@variacao.Nome
+                                        (@variacao.Estoque em estoque)</option>
+                                }
+                            </select>
                         </div>
 
-                        <button type="submit" id="btnAdicionar" class="btn btn-lg btn-primary flex-grow-1 shadow-sm">
+                        <div class="mb-4">
+                            <label for="quantidade" class="form-label fw-bold">Quantidade:</label>
+                            <input type="number" name="quantidade" id="quantidade" value="1" min="1" max="1"
+                                class="form-control shadow-sm text-center" style="width: 100px;" required />
+                        </div>
+
+                        <button type="submit" id="btnAdicionar" class="btn btn-lg btn-primary shadow-sm">
                             <i class="bi bi-cart-plus"></i> Adicionar ao Carrinho
                         </button>
                     </form>
@@ -68,10 +81,29 @@
 @section Scripts {
     <script>
         $(document).ready(function () {
+            $('#VariacaoId').on('change', function () {
+                var select = $(this);
+                var maxEstoque = select.find(':selected').data('estoque') || 1;
+                var quantidadeInput = $('#quantidade');
+
+                quantidadeInput.attr('max', maxEstoque);
+
+                if (parseInt(quantidadeInput.val()) > maxEstoque) {
+                    quantidadeInput.val(1);
+                } else if (parseInt(quantidadeInput.val()) === 0) {
+                    quantidadeInput.val(1);
+                }
+            });
+
             $('#formAdicionarCarrinho').submit(function (e) {
-                e.preventDefault();
+                if (!$('#VariacaoId').val()) {
+                    exibirToast("Por favor, selecione um sabor.", "bg-warning");
+                    e.preventDefault();
+                    return;
+                }
 
                 var form = $(this);
+                debugger;
                 var formData = form.serialize();
                 var btn = $('#btnAdicionar');
                 var originalHtml = btn.html();
@@ -85,12 +117,10 @@
                     success: function (response) {
                         if (response.success) {
                             btn.attr('disabled', false).html(originalHtml);
-                            exibirToast("Produto adicionado ao carrinho!", "bg-success");
-
+                            exibirToast(response.message, "bg-success");
                             if (response.totalItens !== undefined) {
                                 var cartCountElement = $('#cart-count');
                                 cartCountElement.text(response.totalItens);
-
                                 if (response.totalItens > 0) {
                                     cartCountElement.removeClass('d-none');
                                 } else {
@@ -107,22 +137,23 @@
                         exibirToast("Erro de conexão ao servidor.", "bg-danger");
                     }
                 });
+                e.preventDefault();
             });
 
             function exibirToast(mensagem, bgClass) {
                 var toastHtml = `
-                        <div aria-live="polite" aria-atomic="true" class="position-relative">
-                            <div class="toast-container position-fixed top-0 end-0 p-3">
-                                <div class="toast align-items-center text-white ${bgClass} border-0 shadow-sm"
-                                     role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="4000">
-                                    <div class="d-flex">
-                                        <div class="toast-body">${mensagem}</div>
-                                        <button type="button" class="btn-close btn-close-white me-2 m-auto"
-                                                data-bs-dismiss="toast" aria-label="Close"></button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>`;
+        <div aria-live="polite" aria-atomic="true" class="position-relative">
+            <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 2000; margin-top: 55px;">
+                <div class="toast align-items-center text-white ${bgClass} border-0 shadow-sm"
+                    role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="4000">
+                    <div class="d-flex">
+                        <div class="toast-body">${mensagem}</div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                                data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                </div>
+            </div>
+        </div>`;
 
                 $('body').append(toastHtml);
                 var toastEl = document.querySelector('.toast.text-white');

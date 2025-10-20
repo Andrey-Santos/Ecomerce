@@ -1,0 +1,89 @@
+@model Ecomerce.Models.Produto
+
+@{
+    ViewData["Title"] = "Gerenciar Sabores - " + ViewData["ProdutoNome"];
+}
+
+<h1>Gerenciar Sabores</h1>
+<h4>Produto: @ViewData["ProdutoNome"]</h4>
+<hr />
+
+<div class="row">
+    <div class="col-md-10">
+
+        @*
+           O formulário enviará os dados para um novo método (POST) chamado 
+           SalvarVariacoes, que faremos a seguir.
+        *@
+        <form asp-action="SalvarVariacoes">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <input type="hidden" asp-for="Id" />
+
+            <h3>Váriações Existentes</h3>
+
+            <table class="table table-bordered">
+                <thead class="bg-light">
+                    <tr>
+                        <th>Nome</th>
+                        <th>Estoque</th>
+                        <th style="width: 100px;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < Model.Variacoes.Count; i++)
+                    {
+                        <tr>
+                            <input type="hidden" name="Variacoes[@i].Id" value="@Model.Variacoes.ElementAt(i).Id" />
+                            <input type="hidden" name="Variacoes[@i].ProdutoId" value="@Model.Id" />
+
+                            <td>
+                                <input name="Variacoes[@i].Nome" value="@Model.Variacoes.ElementAt(i).Nome"
+                                    class="form-control" />
+                            </td>
+                            <td>
+                                <input name="Variacoes[@i].Estoque" value="@Model.Variacoes.ElementAt(i).Estoque"
+                                    class="form-control" type="number" min="0" />
+                            </td>
+                            <td>
+                                <button type="submit" name="action" value="delete-@Model.Variacoes.ElementAt(i).Id"
+                                    class="btn btn-sm btn-danger">X</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <h3 class="mt-4">Adicionar Nova variação</h3>
+            <div class="alert alert-info">Digite o nome e estoque da nova variação e clique em "Salvar".</div>
+
+            <div class="input-group mb-3">
+                @{
+                    var novoIndice = Model.Variacoes.Count;
+                }
+
+                <input type="hidden" name="Variacoes[@novoIndice].Id" value="0" /> @* ID = 0 indica um novo registro *@
+                <input type="hidden" name="Variacoes[@novoIndice].ProdutoId" value="@Model.Id" />
+
+                <input name="Variacoes[@novoIndice].Nome" placeholder="Nome do Novo Sabor" class="form-control"
+                    required />
+                <input name="Variacoes[@novoIndice].Estoque" placeholder="Estoque Inicial" class="form-control"
+                    type="number" min="0" style="max-width: 150px;" required />
+
+                <button type="submit" value="add" name="action" class="btn btn-success">Adicionar e Salvar</button>
+            </div>
+
+            <div class="mt-5">
+                <button type="submit" value="update" name="action" class="btn btn-primary">Salvar Alterações nos Sabores
+                    Existentes</button>
+                <a asp-action="Index" class="btn btn-secondary">Voltar à Lista de Produtos</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

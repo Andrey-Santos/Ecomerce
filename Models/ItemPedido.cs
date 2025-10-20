@@ -1,23 +1,30 @@
+// Models/ItemPedido.cs
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Ecomerce.Models;
-
-public class ItemPedido
+namespace Ecomerce.Models
 {
-    [Key]
-    public int Id { get; set; }
+    public class ItemPedido
+    {
+        [Key]
+        public int Id { get; set; }
 
-    public int Quantidade { get; set; }
+        public int PedidoId { get; set; }
 
-    [Column(TypeName = "decimal(18, 2)")]
-    public decimal PrecoUnitario { get; set; }
+        [ForeignKey("PedidoId")]
+        public Pedido Pedido { get; set; }
+        public int ProdutoId { get; set; }
 
-    public int ProdutoId { get; set; }
-    [ForeignKey("ProdutoId")]
-    public Produto Produto { get; set; } = default!;
+        [ForeignKey("ProdutoId")]
+        public Produto Produto { get; set; }
+        public int VariacaoId { get; set; }
 
-    public int PedidoId { get; set; }
-    [ForeignKey("PedidoId")]
-    public Pedido Pedido { get; set; } = default!;
+        [ForeignKey("VariacaoId")]
+        public Variacao Variacao { get; set; }
+
+        public int Quantidade { get; set; }
+
+        [Column(TypeName = "decimal(10, 2)")]
+        public decimal PrecoUnitario { get; set; }
+    }
 }

@@ -4,8 +4,8 @@ namespace Ecomerce.Services
 {
     public interface ICarrinhoServico
     {
-        void AdicionarItem(int produtoId, int quantidade);
-        void RemoverItem(int produtoId);
+        Task<string> AdicionarItem(int variacaoId, int quantidade);
+        void RemoverItem(int variacaoId); 
         List<ItemCarrinho> ObterItens();
         Task<List<ItemCarrinho>> ObterDetalhesDoCarrinho();
         void LimparCarrinho();
