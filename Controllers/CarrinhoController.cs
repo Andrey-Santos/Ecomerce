@@ -38,7 +38,7 @@ namespace Ecomerce.Controllers
                 {
                     success = true,
                     message = "Sabor adicionado ao carrinho com sucesso!",
-                    totalItens = _carrinhoServico.ObterItens().Sum(i => i.Quantidade)
+                    totalItens = _carrinhoServico.ObterItens().Count()
                 });
             }
             else
