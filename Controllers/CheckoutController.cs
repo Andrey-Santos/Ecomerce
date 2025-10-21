@@ -151,7 +151,7 @@ public class CheckoutController : Controller
 
                 return RedirectToAction("MeusPedidos", "Pedidos");
             }
-            catch (Exception ex)
+            catch
             {
                 await transaction.RollbackAsync();
 

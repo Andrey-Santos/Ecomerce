@@ -48,9 +48,9 @@ namespace Ecomerce.Controllers
         }
 
         [HttpPost]
-        public IActionResult Remover(int id)
+        public IActionResult Remover(int variacaoId)
         {
-            _carrinhoServico.RemoverItem(id);
+            _carrinhoServico.RemoverItem(variacaoId);
             return RedirectToAction("Index");
         }
     }
