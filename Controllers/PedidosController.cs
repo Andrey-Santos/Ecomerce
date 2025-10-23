@@ -97,7 +97,9 @@ public class PedidosController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AlterarStatus(int id, string novoStatus)
     {
-        var pedido = await _context.Pedidos.FindAsync(id);
+        var pedido = await _context.Pedidos
+            .Include(p => p.ItensPedido)
+            .FirstOrDefaultAsync(p => p.Id == id);
 
         if (pedido == null)
         {
@@ -109,16 +111,75 @@ public class PedidosController : Controller
             return RedirectToAction(nameof(Index));
         }
 
-        // Altera o status e salva
-        pedido.Status = novoStatus;
-        _context.Update(pedido);
-        await _context.SaveChangesAsync();
-
-        TempData.Put("Notificacao", new Notificacao
+        if (pedido.Status == "Cancelado")
         {
-            Tipo = "Success",
-            Mensagem = $"Status do Pedido #{id} alterado para **{novoStatus}** com sucesso!"
-        });
+            TempData.Put("Notificacao", new Notificacao
+            {
+                Tipo = "Warning",
+                Mensagem = $"O status do Pedido #{id} não pode ser alterado pois já está em estado 'Cancelado'."
+            });
+            return RedirectToAction(nameof(DetalhesAdmin), new { id = id });
+        }
+
+        if (novoStatus == "Cancelado")
+        {
+            using (var transaction = await _context.Database.BeginTransactionAsync())
+            {
+                try
+                {
+                    var variacaoIds = pedido.ItensPedido.Select(ip => ip.VariacaoId).ToList();
+                    var variacoesDb = await _context.Variacoes
+                        .Where(v => variacaoIds.Contains(v.Id))
+                        .ToListAsync();
+
+                    foreach (var item in pedido.ItensPedido)
+                    {
+                        var variacao = variacoesDb.FirstOrDefault(v => v.Id == item.VariacaoId);
+
+                        if (variacao != null)
+                        {
+                            variacao.Estoque += item.Quantidade;
+                            _context.Variacoes.Update(variacao);
+                        }
+                    }
+
+                    pedido.Status = novoStatus;
+                    _context.Pedidos.Update(pedido);
+
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
+                    TempData.Put("Notificacao", new Notificacao
+                    {
+                        Tipo = "Success",
+                        Mensagem = $"Pedido #{id} CANCELADO e estoque reajustado com sucesso!"
+                    });
+                }
+                catch (Exception)
+                {
+                    await transaction.RollbackAsync();
+
+                    TempData.Put("Notificacao", new Notificacao
+                    {
+                        Tipo = "Error",
+                        Mensagem = "Erro ao cancelar o pedido e reverter o estoque. A transação foi desfeita."
+                    });
+                    return RedirectToAction(nameof(DetalhesAdmin), new { id = id });
+                }
+            }
+        }
+        else
+        {
+            pedido.Status = novoStatus;
+            _context.Update(pedido);
+            await _context.SaveChangesAsync();
+
+            TempData.Put("Notificacao", new Notificacao
+            {
+                Tipo = "Success",
+                Mensagem = $"Status do Pedido #{id} alterado para **{novoStatus}** com sucesso!"
+            });
+        }
 
         return RedirectToAction(nameof(DetalhesAdmin), new { id = id });
     }
