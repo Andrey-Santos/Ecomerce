@@ -9,7 +9,7 @@ namespace Ecomerce.Models
 
         [Required(ErrorMessage = "O nome do produto é obrigatório.")]
         [StringLength(100, ErrorMessage = "O nome não pode exceder 100 caracteres.")]
-        [Display(Name = "Nome do Produto")] 
+        [Display(Name = "Nome do Produto")]
         public string Nome { get; set; } = default!;
 
         [Display(Name = "Descrição Detalhada")]
@@ -18,15 +18,22 @@ namespace Ecomerce.Models
         [Required(ErrorMessage = "O preço é obrigatório.")]
         [Column(TypeName = "decimal(18, 2)")]
         [Range(0.01, double.MaxValue, ErrorMessage = "O preço deve ser maior que zero.")]
-        [Display(Name = "Preço")] 
+        [Display(Name = "Preço")]
         public decimal Preco { get; set; }
 
         [Display(Name = "URL da Imagem")]
         public string ImagemUrl { get; set; } = default!;
-        
+
         [NotMapped]
-        public IFormFile ImagemUpload { get; set; } 
-        
+        public IFormFile ImagemUpload { get; set; }
+
         public ICollection<Variacao> Variacoes { get; set; } = new List<Variacao>();
+
+        [Column(TypeName = "decimal(10, 2)")]
+        [Display(Name = "Preço Promocional")]
+        public decimal? PrecoPromocional { get; set; }
+
+        [Display(Name = "Destasque (Promoção)")]
+        public bool EmPromocao { get; set; } = false;
     }
 }

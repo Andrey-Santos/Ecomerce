@@ -1,52 +1,78 @@
 ﻿@model List<Ecomerce.Models.Produto>
+@using System.Globalization
 
 @{
     ViewData["Title"] = "Bem-vindo à Loja";
 }
 
-<div class="text-center mb-5">
-    <h1 class="display-4">Nossos Produtos</h1>
-</div>
+<div class="container my-5">
 
-<form asp-controller="Home" asp-action="Index" method="get" class="mb-4">
-    <div class="input-group">
-        <input type="text" name="searchString" value="@ViewData["CurrentFilter"]" class="form-control"
-            placeholder="Buscar produtos por nome ou descrição..." />
-        <button type="submit" class="btn btn-primary">
-            <i class="fa fa-search"></i> Buscar
-        </button>
-        <a asp-action="Index" class="btn btn-secondary">Limpar</a>
+    @await Component.InvokeAsync("CarrosselPromocao")
+    
+    <hr class="my-5" />
+
+    <div class="text-center mb-5">
+        <h1 class="display-4">Nossos Produtos</h1>
     </div>
-</form>
 
-<hr />
+    <form asp-controller="Home" asp-action="Index" method="get" class="mb-4">
+        <div class="input-group">
+            <input type="text" name="searchString" value="@ViewData["CurrentFilter"]" class="form-control"
+                placeholder="Buscar produtos por nome ou descrição..." />
+            <button type="submit" class="btn btn-primary">
+                <i class="fa fa-search"></i> Buscar
+            </button>
+            <a asp-action="Index" class="btn btn-secondary">Limpar</a>
+        </div>
+    </form>
 
-@if (!Model.Any())
-{
-    <div class="alert alert-warning text-center">Nenhum produto em estoque para exibir.</div>
-}
-else
-{
-    <div class="row row-cols-1 row-cols-md-3 g-4">
-        @foreach (var produto in Model)
-        {
-            <div class="col">
-                <div class="card h-100 shadow-sm">
-                    <img src="@produto.ImagemUrl" class="card-img-top" alt="@produto.Nome"
-                        style="height: 250px; object-fit: cover;">
+    <hr />
 
-                    <div class="card-body d-flex flex-column">
-                        <h5 class="card-title">@produto.Nome</h5>
-                        <p class="card-text text-muted flex-grow-1">@produto.Descricao</p>
-                        <h4 class="text-success mt-auto">@produto.Preco.ToString("C2")</h4>
+    @if (!Model.Any())
+    {
+        <div class="alert alert-warning text-center">Nenhum produto em estoque para exibir.</div>
+    }
+    else
+    {
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+            @foreach (Produto produto in Model)
+            {
+                <div class="col">
+                    <div class="card h-100 shadow-sm">
+                        <img src="@produto.ImagemUrl" class="card-img-top" alt="@produto.Nome"
+                            style="height: 250px; object-fit: cover;">
 
-                        <a asp-controller="Produtos" asp-action="Details" asp-route-id="@produto.Id"
-                            class="btn btn-primary mt-2">
-                            Ver Detalhes
-                        </a>
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">@produto.Nome</h5>
+                            <p class="card-text text-muted flex-grow-1">@produto.Descricao</p>
+                            
+                            @if (produto.EmPromocao && produto.PrecoPromocional.HasValue && produto.PrecoPromocional.Value < produto.Preco)
+                            {
+                                <div class="d-flex flex-column mt-auto">
+                                    <span class="text-decoration-line-through text-muted small">
+                                        De: @produto.Preco.ToString("C", new CultureInfo("pt-BR"))
+                                    </span>
+                                    <h4 class="text-danger fw-bold">
+                                        Por: @produto.PrecoPromocional.Value.ToString("C", new CultureInfo("pt-BR"))
+                                        <span class="badge bg-danger ms-2">PROMOÇÃO</span>
+                                    </h4>
+                                </div>
+                            }
+                            else
+                            {
+                                <h4 class="text-success mt-auto">
+                                    @produto.Preco.ToString("C", new CultureInfo("pt-BR"))
+                                </h4>
+                            }
+
+                            <a asp-controller="Produtos" asp-action="Details" asp-route-id="@produto.Id"
+                                class="btn btn-primary mt-2">
+                                Ver Detalhes
+                            </a>
+                        </div>
                     </div>
                 </div>
-            </div>
-        }
-    </div>
-}
+            }
+        </div>
+    }
+</div>

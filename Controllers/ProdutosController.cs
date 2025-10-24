@@ -102,17 +102,20 @@ namespace Ecomerce.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Nome,Descricao,Preco,CategoriaId,ImagemUrl,ImagemUpload")] Produto produto)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Nome,Descricao,Preco,CategoriaId,ImagemUrl,ImagemUpload,PrecoPromocional,EmPromocao")] Produto produto)
         {
             if (id != produto.Id)
                 return NotFound();
 
             var produtoOriginal = await _context.Produtos
-                .AsNoTracking()
-                .FirstOrDefaultAsync(m => m.Id == id);
+                                                .AsNoTracking()
+                                                .FirstOrDefaultAsync(m => m.Id == id);
 
             if (produtoOriginal == null)
                 return NotFound();
+
+            if (produto.EmPromocao && !produto.PrecoPromocional.HasValue)
+                ModelState.AddModelError("PrecoPromocional", "O preço promocional é obrigatório se a opção 'Destaque na Home' estiver marcada.");
 
             if (!ModelState.IsValid)
                 return View(produto);

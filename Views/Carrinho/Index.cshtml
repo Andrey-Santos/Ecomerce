@@ -1,10 +1,22 @@
 @model List<Ecomerce.Models.ItemCarrinho>
 @using System.Globalization
-@inject Ecomerce.Services.ICarrinhoServico CarrinhoServico
 
 @{
     ViewData["Title"] = "Seu Carrinho de Compras";
-    var totalGeral = CarrinhoServico.ObterTotal(Model);
+
+    var totalGeral = Model
+        .Sum(item => 
+        {
+            decimal precoUnitario = item.Produto.Preco;
+            if (item.Produto.PrecoPromocional.HasValue && item.Produto.PrecoPromocional.Value < item.Produto.Preco)
+            {
+                precoUnitario = item.Produto.PrecoPromocional.Value;
+            }
+            return precoUnitario * item.Quantidade;
+        });
+
+    var subtotalOriginal = Model.Sum(item => item.Produto.Preco * item.Quantidade);
+    var totalDesconto = subtotalOriginal - totalGeral;
 }
 
 <h1>Seu Carrinho de Compras</h1>
@@ -35,7 +47,14 @@ else
                 <tbody>
                     @foreach (ItemCarrinho item in Model)
                     {
-                        Produto produto = item.Produto; 
+                        Produto produto = item.Produto;
+                        
+                        decimal precoUnitario = produto.Preco;
+                        bool isPromocao = produto.PrecoPromocional.HasValue && produto.PrecoPromocional.Value < produto.Preco;
+                        if (isPromocao)
+                        {
+                            precoUnitario = produto.PrecoPromocional.Value;
+                        }
 
                         if (produto != null)
                         {
@@ -55,13 +74,27 @@ else
                                     }
                                 </td>
                                 <td>
-                                    @produto.Preco.ToString("C", new CultureInfo("pt-BR"))
+                                    @if (isPromocao)
+                                    {
+                                        <div class="d-flex flex-column">
+                                            <span class="text-muted text-decoration-line-through small">
+                                                @produto.Preco.ToString("C", new CultureInfo("pt-BR"))
+                                            </span>
+                                            <span class="text-danger fw-bold">
+                                                @precoUnitario.ToString("C", new CultureInfo("pt-BR"))
+                                            </span>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        @precoUnitario.ToString("C", new CultureInfo("pt-BR"))
+                                    }
                                 </td>
                                 <td>
                                     @item.Quantidade
                                 </td>
                                 <td>
-                                    @((produto.Preco * item.Quantidade).ToString("C", new CultureInfo("pt-BR")))
+                                    @((precoUnitario * item.Quantidade).ToString("C", new CultureInfo("pt-BR")))
                                 </td>
                                 <td>
                                     <form asp-controller="Carrinho" asp-action="Remover" method="post" class="d-inline">
@@ -83,13 +116,22 @@ else
                 <div class="card-body">
                     <h5 class="card-title">Resumo do Pedido</h5>
                     <hr />
-                    <div class="d-flex justify-content-between mb-3">
-                        <p class="mb-0">Subtotal:</p>
-                        <p class="mb-0 fw-bold">@totalGeral.ToString("C", new CultureInfo("pt-BR"))</p>
-                    </div>
                     
-                    <div class="d-flex justify-content-between h4">
-                        <p class="mb-0 fw-bold">Total Geral:</p>
+                    <div class="d-flex justify-content-between mb-2">
+                        <p class="mb-0">Subtotal Original:</p>
+                        <p class="mb-0 fw-bold">@subtotalOriginal.ToString("C", new CultureInfo("pt-BR"))</p>
+                    </div>
+
+                    @if (totalDesconto > 0)
+                    {
+                        <div class="d-flex justify-content-between mb-3 text-danger">
+                            <p class="mb-0">Economia Total:</p>
+                            <p class="mb-0 fw-bold">- @totalDesconto.ToString("C", new CultureInfo("pt-BR"))</p>
+                        </div>
+                    }
+
+                    <div class="d-flex justify-content-between h4 border-top pt-2">
+                        <p class="mb-0 fw-bold">Total a Pagar:</p>
                         <p class="mb-0 text-success fw-bolder">@totalGeral.ToString("C", new CultureInfo("pt-BR"))</p>
                     </div>
                     

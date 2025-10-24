@@ -1,0 +1,60 @@
+@model List<Ecomerce.Models.Produto>
+@using System.Globalization
+@using Humanizer
+
+@if (Model != null && Model.Any())
+{
+    <h2 class="text-center my-4">🔥 Produtos em Destaque</h2>
+
+    <div id="carouselExampleControls" class="carousel slide bg-light p-3 shadow-sm rounded" data-bs-ride="carousel">
+        <div class="carousel-inner">
+            @{
+                int count = 0;
+            }
+            @foreach (Produto produto in Model)
+            {
+                <div class="carousel-item @(count == 0 ? "active" : "")">
+                    <div class="row align-items-center">
+                        <div class="col-md-5 text-center">
+                            <img src="@produto.ImagemUrl" class="d-block w-100 img-fluid" style="max-height: 300px; object-fit: contain;" alt="@produto.Nome">
+                        </div>
+                        <div class="col-md-7 p-4">
+                            <h3>@produto.Nome</h3>
+                            <p>@produto.Descricao.Truncate(150)</p>
+
+                            @if (produto.PrecoPromocional.HasValue && produto.PrecoPromocional < produto.Preco)
+                            {
+                                <div class="d-flex align-items-baseline">
+                                    <p class="text-muted text-decoration-line-through me-3">
+                                        @produto.Preco.ToString("C", new CultureInfo("pt-BR"))
+                                    </p>
+                                    <h4 class="text-danger fw-bold">
+                                        @produto.PrecoPromocional.Value.ToString("C", new CultureInfo("pt-BR"))
+                                    </h4>
+                                </div>
+                            }
+                            else
+                            {
+                                <h4 class="text-primary fw-bold">
+                                    @produto.Preco.ToString("C", new CultureInfo("pt-BR"))
+                                </h4>
+                            }
+
+                            <a asp-controller="Produtos" asp-action="Details" asp-route-id="@produto.Id" class="btn btn-danger mt-3">Ver Detalhes</a>
+                        </div>
+                    </div>
+                </div>
+                count++;
+            }
+        </div>
+        
+        <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleControls" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Anterior</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleControls" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Próximo</span>
+        </button>
+    </div>
+}

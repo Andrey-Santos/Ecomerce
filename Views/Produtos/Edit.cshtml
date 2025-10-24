@@ -9,6 +9,7 @@
         <div class="card-header bg-primary text-white text-center py-3 rounded-top-4">
             <h2 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Editar Produto</h2>
         </div>
+
         <div class="card-body p-4">
             <form asp-action="Edit" enctype="multipart/form-data">
                 <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
@@ -30,15 +31,37 @@
                     </div>
                 </div>
 
+                <hr class="my-4">
+
+                <h4 class="mb-3 text-primary">Configurações de Promoção</h4>
+
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" asp-for="EmPromocao" />
+                    <label class="form-check-label fw-semibold" asp-for="EmPromocao">Ativar Promoção</label>
+                </div>
+
+                <div id="promo-area">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="PrecoPromocional" class="form-label fw-semibold"></label>
+                            <input asp-for="PrecoPromocional" class="form-control shadow-sm" placeholder="Preço promocional" />
+                            <span asp-validation-for="PrecoPromocional" class="text-danger small"></span>
+                            <small class="form-text text-muted">Se o produto não estiver em promoção, deixe vazio.</small>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
                 <div class="mb-3">
                     <label asp-for="Descricao" class="form-label fw-semibold"></label>
-                    <textarea asp-for="Descricao" class="form-control shadow-sm" rows="3"
-                        placeholder="Descrição detalhada..."></textarea>
+                    <textarea asp-for="Descricao" class="form-control shadow-sm" rows="4"
+                              placeholder="Descrição detalhada do produto..."></textarea>
                     <span asp-validation-for="Descricao" class="text-danger small"></span>
                 </div>
 
                 <div class="mb-4">
-                    <label asp-for="ImagemUpload" class="form-label fw-semibold">Trocar Imagem:</label>
+                    <label asp-for="ImagemUpload" class="form-label fw-semibold">Alterar Imagem:</label>
                     <input asp-for="ImagemUpload" type="file" class="form-control shadow-sm" />
                     <span asp-validation-for="ImagemUpload" class="text-danger small"></span>
                 </div>
@@ -48,21 +71,22 @@
                     <div class="mb-4 text-center">
                         <label class="form-label fw-semibold d-block">Imagem Atual:</label>
                         <img src="@Model.ImagemUrl" alt="Imagem Atual" class="img-thumbnail shadow-sm rounded-3"
-                            style="max-width: 200px; height: auto;" />
+                             style="max-width: 220px; height: auto;" />
                     </div>
                 }
 
                 <hr />
 
                 <div class="d-flex justify-content-between align-items-center mt-4">
-
                     <a asp-action="Index" class="btn btn-outline-secondary px-4">
                         <i class="bi bi-arrow-left me-1"></i> Voltar à Lista
                     </a>
-                    <div class="mb-4">
+
+                    <div class="d-flex gap-2">
                         <a asp-action="GerenciarVariacoes" asp-route-id="@Model.Id" class="btn btn-warning">
-                            <i class="fas fa-flask"></i> Gerenciar variações do produto
+                            <i class="fas fa-flask"></i> Gerenciar Variações
                         </a>
+
                         <button type="submit" class="btn btn-success px-4">
                             <i class="bi bi-save me-1"></i> Salvar
                         </button>
@@ -74,6 +98,18 @@
 </div>
 
 @section Scripts {
+    <script>
+        const promoCheck = document.querySelector('[name="EmPromocao"]');
+        const promoArea = document.getElementById("promo-area");
+
+        function togglePromo() {
+            promoArea.style.display = promoCheck.checked ? "block" : "none";
+        }
+
+        promoCheck.addEventListener("change", togglePromo);
+        togglePromo();
+    </script>
+
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
