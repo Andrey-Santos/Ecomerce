@@ -5,86 +5,126 @@
 @{
     ViewData["Title"] = "Finalizar Compra";
 }
+<div class="container mt-5">
+    <div class="row g-4 align-items-stretch">
 
-<h1>Finalizar Compra</h1>
+        <!-- FORMULÁRIO DE ENTREGA -->
+        <div class="col-lg-6 d-flex">
+            <div class="card shadow-lg border-0 rounded-4 h-100 w-100">
+                <div class="card-header bg-primary text-white text-center py-3 rounded-top-4">
+                    <h4 class="mb-0"><i class="bi bi-truck me-2"></i> Dados para Entrega</h4>
+                </div>
 
-<h4>Detalhes para Envio</h4>
-<hr />
+                <div class="card-body p-4">
+                    <form asp-action="Index" method="post">
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-<div class="row">
-    <div class="col-md-6">
-        <form asp-action="Index" method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <div class="mb-3">
+                            <label asp-for="NomeCliente" class="form-label fw-semibold"></label>
+                            <input asp-for="NomeCliente" class="form-control shadow-sm" placeholder="Seu nome completo" />
+                            <span asp-validation-for="NomeCliente" class="text-danger small"></span>
+                        </div>
 
-            <div class="form-group mb-3">
-                <label asp-for="NomeCliente" class="control-label"></label>
-                <input asp-for="NomeCliente" class="form-control" />
-                <span asp-validation-for="NomeCliente" class="text-danger"></span>
+                        <div class="mb-3">
+                            <label asp-for="Endereco" class="form-label fw-semibold"></label>
+                            <input asp-for="Endereco" class="form-control shadow-sm" placeholder="Rua, número, bairro" />
+                            <span asp-validation-for="Endereco" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="Cidade" class="form-label fw-semibold"></label>
+                            <input asp-for="Cidade" class="form-control shadow-sm" placeholder="Cidade" />
+                            <span asp-validation-for="Cidade" class="text-danger small"></span>
+                        </div>
+
+                        <button type="submit" class="btn btn-success w-100 py-2 fw-semibold">
+                            <i class="bi bi-credit-card me-1"></i> Confirmar Envio e Prosseguir para Pagamento
+                        </button>
+                    </form>
+                </div>
             </div>
+        </div>
 
-            <div class="form-group mb-3">
-                <label asp-for="Endereco" class="control-label"></label>
-                <input asp-for="Endereco" class="form-control" />
-                <span asp-validation-for="Endereco" class="text-danger"></span>
-            </div>
+        <!-- RESUMO DO PEDIDO -->
+        <div class="col-lg-6 d-flex">
+            <div class="card shadow-lg border-0 rounded-4 h-100 w-100">
+                <div class="card-header bg-dark text-white text-center py-3 rounded-top-4">
+                    <h4 class="mb-0"><i class="bi bi-cart-check me-2"></i> Resumo do Pedido</h4>
+                </div>
 
-            <div class="form-group mb-3">
-                <label asp-for="Cidade" class="control-label"></label>
-                <input asp-for="Cidade" class="form-control" />
-                <span asp-validation-for="Cidade" class="text-danger"></span>
-            </div>
+                <div class="card-body p-4">
 
-            <div class="form-group">
-                <input type="submit" value="Confirmar Envio e Pagar" class="btn btn-success btn-lg" />
-            </div>
-        </form>
-    </div>
+                    @* Lógica do Resumo permanece igual *@
 
-    <div class="col-md-6">
-        <h4>Resumo da Compra</h4>
+                    @{
+                        var carrinhoItens = ViewBag.CarrinhoItens as List<ItemCarrinho>;
+                        decimal totalFinal = ViewBag.TotalCarrinho ?? 0.00m;
 
-        @{
-            var carrinhoItens = ViewBag.CarrinhoItens as List<ItemCarrinho>;
-            decimal total = ViewBag.TotalCarrinho ?? 0.00m;
-        }
-
-        <table class="table table-sm">
-            <thead>
-                <tr>
-                    <th>Produto</th>
-                    <th class="text-end">Subtotal</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (carrinhoItens != null)
-                {
-                    @foreach (var item in carrinhoItens)
-                    {
-                        <tr>
-                            <td>@item.Quantidade x **@item.Produto!.Nome**</td>
-                            <td class="text-end">@((item.Produto.Preco * item.Quantidade).ToString("C2"))</td>
-                        </tr>
+                        decimal subtotalComPromocao = 0.00m;
+                        decimal economiaPrecoCheio = 0.00m;
                     }
-                }
-            </tbody>
-            <tfoot>
-                <tr class="table-secondary">
-                    <td class="fw-bold text-end">Total:</td>
-                    <td class="fw-bold text-end">@total.ToString("C2")</td>
-                </tr>
-            </tfoot>
-        </table>
 
-        <div class="mt-4">
-            <a asp-action="Index" asp-controller="Carrinho" class="btn btn-outline-secondary w-100">
-                &laquo; Voltar e Editar Carrinho
-            </a>
+                    <table class="table align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Produto</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (carrinhoItens != null)
+                            {
+                                @foreach (var item in carrinhoItens)
+                                {
+                                    decimal precoOriginal = item.Produto.Preco;
+                                    decimal precoFinal = item.Produto.PrecoPromocional ?? precoOriginal;
+                                    bool temPromocao = precoFinal < precoOriginal;
+
+                                    subtotalComPromocao += precoFinal * item.Quantidade;
+                                    economiaPrecoCheio += (precoOriginal - precoFinal) * item.Quantidade;
+
+                                    <tr>
+                                        <td>
+                                            <strong>@item.Quantidade x @item.Produto.Nome</strong>
+                                            @if (temPromocao)
+                                            {
+                                                <span class="badge bg-danger ms-2">Promo</span>
+                                            }
+                                        </td>
+                                        <td class="text-end">@((precoFinal * item.Quantidade).ToString("C2"))</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-light">
+                                <td class="fw-bold text-end">Subtotal:</td>
+                                <td class="fw-bold text-end">@subtotalComPromocao.ToString("C2")</td>
+                            </tr>
+                            @if (economiaPrecoCheio > 0)
+                            {
+                                <tr class="table-success">
+                                    <td class="fw-bold text-end text-success">Você economizou:</td>
+                                    <td class="fw-bold text-end text-success">- @economiaPrecoCheio.ToString("C2")</td>
+                                </tr>
+                            }
+                            <tr class="table-dark text-white">
+                                <td class="fw-bold text-end">Total a pagar:</td>
+                                <td class="fw-bold text-end">@totalFinal.ToString("C2")</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+                    <a asp-action="Index" asp-controller="Carrinho" class="btn btn-outline-secondary w-100 mt-3">
+                        <i class="bi bi-arrow-left me-1"></i> Voltar e Editar Carrinho
+                    </a>
+
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
 }

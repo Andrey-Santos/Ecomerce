@@ -45,11 +45,9 @@ builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
@@ -60,22 +58,24 @@ app.UseSession();
 app.UseAuthorization();
 app.MapStaticAssets();
 
+app.MapControllerRoute(
+    name: "areas",
+    pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
+
 app.MapRazorPages();
+
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
-
+    
 using (var scope = app.Services.CreateScope())
 {
     var serviceProvider = scope.ServiceProvider;
 
     try
     {
-        // 1. Cria os Roles (Admin, Cliente)
         await DataSeeder.SeedRoles(serviceProvider);
-
-        // 2. Cria o primeiro utilizador Admin
         await DataSeeder.SeedAdminUser(serviceProvider);
     }
     catch (Exception ex)

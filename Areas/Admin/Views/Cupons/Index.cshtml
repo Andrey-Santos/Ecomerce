@@ -1,0 +1,64 @@
+@model IEnumerable<Ecomerce.Models.Cupom>
+
+@{
+    ViewData["Title"] = "Gerenciar Cupons";
+}
+
+<h1>Gerenciar Cupons</h1>
+
+<p>
+    <a asp-area="Admin" asp-action="Create" class="btn btn-primary">Adicionar Novo Cupom</a>
+</p>
+
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>@Html.DisplayNameFor(model => model.Codigo)</th>
+            <th>@Html.DisplayNameFor(model => model.TipoDesconto)</th>
+            <th>@Html.DisplayNameFor(model => model.Valor)</th>
+            <th>@Html.DisplayNameFor(model => model.ValorMinimoPedido)</th>
+            <th>@Html.DisplayNameFor(model => model.DataExpiracao)</th>
+            <th>@Html.DisplayNameFor(model => model.Ativo)</th>
+            <th>@Html.DisplayNameFor(model => model.UsosAtuais) / @Html.DisplayNameFor(model => model.LimiteUsos)</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@Html.DisplayFor(modelItem => item.Codigo)</td>
+                <td>@Html.DisplayFor(modelItem => item.TipoDesconto)</td>
+                <td>
+                    @if (item.TipoDesconto == Ecomerce.Models.TipoDesconto.Porcentagem)
+                    {
+                        @(item.Valor.ToString("N0") + "%")
+                    }
+                    else
+                    {
+                        @item.Valor.ToString("C")
+                    }
+                </td>
+                <td>
+                    @(item.ValorMinimoPedido.HasValue ? item.ValorMinimoPedido.Value.ToString("C") : "N/A")
+                </td>
+                <td>
+                    @(item.DataExpiracao.HasValue ? item.DataExpiracao.Value.ToShortDateString() : "Sem Expiração")
+                </td>
+                <td>
+                    <span class="badge @(item.Ativo ? "bg-success" : "bg-danger")">
+                        @(item.Ativo ? "Sim" : "Não")
+                    </span>
+                </td>
+                <td>
+                    @(item.UsosAtuais) / @(item.LimiteUsos.HasValue ? item.LimiteUsos.Value.ToString() : "∞")
+                </td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">Editar</a> |
+                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info">Detalhes</a> |
+                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">Excluir</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

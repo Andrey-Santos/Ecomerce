@@ -1,0 +1,97 @@
+@model Ecomerce.Models.Cupom
+
+@{
+    ViewData["Title"] = "Cadastrar Cupom";
+}
+
+<div class="container mt-5">
+    <div class="card shadow-lg border-0 rounded-4">
+        <div class="card-header bg-primary text-white text-center py-3 rounded-top-4">
+            <h2 class="mb-0"><i class="bi bi-ticket-perforated-fill me-2"></i> Cadastrar Cupom</h2>
+        </div>
+
+        <div class="card-body p-4">
+            <form asp-action="Create">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Codigo" class="form-label fw-semibold"></label>
+                        <input asp-for="Codigo" class="form-control shadow-sm" placeholder="Ex: DESCONTO10" />
+                        <span asp-validation-for="Codigo" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="TipoDesconto" class="form-label fw-semibold"></label>
+                        <select asp-for="TipoDesconto" class="form-select shadow-sm"
+                            asp-items="Html.GetEnumSelectList<TipoDesconto>()">
+                            <option value="">Selecione o Tipo</option>
+                        </select>
+                        <span asp-validation-for="TipoDesconto" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Valor" class="form-label fw-semibold"></label>
+                        <input asp-for="Valor" class="form-control shadow-sm" placeholder="Ex: 10 ou 5,00" />
+                        <span asp-validation-for="Valor" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="ValorMinimoPedido" class="form-label fw-semibold"></label>
+                        <input asp-for="ValorMinimoPedido" class="form-control shadow-sm" placeholder="Ex: 50,00" />
+                        <span asp-validation-for="ValorMinimoPedido" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <hr class="my-4" />
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" asp-for="Ativo" />
+                            <label class="form-check-label fw-semibold" asp-for="Ativo">Cupom Ativo</label>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="DataExpiracao" class="form-label fw-semibold"></label>
+                        <input asp-for="DataExpiracao" type="date" class="form-control shadow-sm" />
+                        <span asp-validation-for="DataExpiracao" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="LimiteUsos" class="form-label fw-semibold"></label>
+                        <input asp-for="LimiteUsos" class="form-control shadow-sm" placeholder="Ex: 100" />
+                        <span asp-validation-for="LimiteUsos" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="UsosAtuais" class="form-label fw-semibold"></label>
+                    <input asp-for="UsosAtuais" class="form-control shadow-sm" readonly />
+                    <small class="form-text text-muted">Este valor é atualizado automaticamente conforme o cupom é
+                        utilizado.</small>
+                    <span asp-validation-for="UsosAtuais" class="text-danger small"></span>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mt-4">
+                    <a asp-action="Index" class="btn btn-outline-secondary px-4">
+                        <i class="bi bi-arrow-left me-1"></i> Voltar à Lista
+                    </a>
+
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-check-circle me-1"></i> Cadastrar Cupom
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

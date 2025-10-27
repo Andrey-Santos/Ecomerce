@@ -9,6 +9,8 @@ namespace Ecomerce.Data
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {
         }
+
+        public DbSet<Cupom> Cupons { get; set; }
         public DbSet<Produto> Produtos { get; set; }
         public DbSet<Pedido> Pedidos { get; set; } = default!;
         public DbSet<Variacao> Variacoes { get; set; } = default!;
