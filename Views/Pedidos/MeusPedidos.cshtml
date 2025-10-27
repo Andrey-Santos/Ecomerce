@@ -1,4 +1,5 @@
-@model List<Pedido>
+@model List<Ecomerce.Models.Pedido>
+@using Ecomerce.Models
 
 @{
     ViewData["Title"] = "Meus Pedidos";
@@ -20,61 +21,62 @@ else
         {
             <div class="accordion-item shadow-sm mb-3">
                 <h2 class="accordion-header" id="heading_@pedido.Id">
-                    <button class="accordion-button @(pedido.Status == "Pendente" ? "bg-warning" : "bg-light")" type="button" data-bs-toggle="collapse" data-bs-target="#collapse_@pedido.Id" aria-expanded="true" aria-controls="collapse_@pedido.Id">
+                    <button class="accordion-button @(pedido.Status == "Pendente" ? "bg-warning" : "bg-light")" type="button"
+                        data-bs-toggle="collapse" data-bs-target="#collapse_@pedido.Id" aria-expanded="true"
+                        aria-controls="collapse_@pedido.Id">
                         <div class="w-100 d-flex justify-content-between">
                             <span>
                                 Pedido **#@pedido.Id**
                                 <span class="text-muted small ms-3">@pedido.DataPedido.ToString("dd/MM/yyyy HH:mm")</span>
                             </span>
                             <span>
-                                **Status:** <span class="badge @(pedido.Status == "Pendente" ? "bg-danger" : "bg-success")">@pedido.Status</span>
+                                **Status:** <span
+                                    class="badge @(pedido.Status == "Pendente" ? "bg-danger" : "bg-success")">@pedido.Status</span>
                                 **Total:** <span class="text-dark fw-bold ms-3">@pedido.TotalPedido.ToString("C2")</span>
                             </span>
                         </div>
                     </button>
                 </h2>
-                <div id="collapse_@pedido.Id" class="accordion-collapse collapse" aria-labelledby="heading_@pedido.Id" data-bs-parent="#accordionPedidos">
+                <div id="collapse_@pedido.Id" class="accordion-collapse collapse" aria-labelledby="heading_@pedido.Id"
+                    data-bs-parent="#accordionPedidos">
                     <div class="accordion-body">
-                        
-                        @{
-                            // Calcula o valor total que seria cobrado se todos os itens estivessem no preço cheio (Preco)
-                            decimal subtotalOriginal = pedido.ItensPedido.Sum(item => item.Quantidade * item.Produto.Preco);
-                            
-                            // O total que foi cobrado (soma das quantidades pelo PrecoUnitario)
-                            decimal subtotalCobrado = pedido.ItensPedido.Sum(item => item.Quantidade * item.PrecoUnitario);
 
-                            // O desconto é a diferença entre o preço original de tabela e o que foi cobrado
-                            decimal descontoPromocao = subtotalOriginal - subtotalCobrado;
-                            
-                            // Se houver um campo ValorDescontoCupom, inclua-o no cálculo do desconto total. 
-                            // Como o erro CS1061 foi reportado, vou OMITIR ValorDescontoCupom.
-                            // Se você usa o campo TotalPedido para o valor final (já descontado), a lógica é mais simples.
-                            
-                            // No entanto, para exibir o desconto, vamos usar o TotalPedido (valor final) vs Subtotal Original:
-                            decimal descontoTotalExibido = subtotalOriginal - pedido.TotalPedido;
+                        @{
+                            decimal subtotalOriginal = pedido.ItensPedido?.Sum(item =>
+                            item.Quantidade * (item.Produto?.Preco ?? item.PrecoUnitario)) ?? 0.00m;
+
+                            decimal subtotalFinal = pedido.ItensPedido?.Sum(item =>
+                            item.Quantidade * (item.Produto?.PrecoPromocional ?? item.PrecoUnitario)) ?? 0.00m;
+
+
+                            decimal descontoTotalExibido = subtotalOriginal - subtotalFinal;
+
+                            string nomeCliente = pedido.NomeCliente ?? "N/A";
+                            string endereco = pedido.Endereco ?? "N/A";
+                            string cidade = pedido.Cidade ?? "N/A";
                         }
-                        
+
                         <div class="row">
-                            
+
                             <div class="col-md-6 mb-3">
                                 <h5>Endereço de Entrega:</h5>
-                                <p class="mb-0">**@pedido.NomeCliente**</p>
-                                <p class="mb-0">@pedido.Endereco</p>
-                                <p class="mb-0">@pedido.Cidade</p>
+                                <p class="mb-0">**@nomeCliente**</p>
+                                <p class="mb-0">@endereco</p>
+                                <p class="mb-0">@cidade</p>
                             </div>
 
                             <div class="col-md-6 mb-3">
                                 <h5>Resumo Financeiro:</h5>
                                 <ul class="list-group list-group-flush">
                                     <li class="list-group-item d-flex justify-content-between">
-                                        Subtotal (Preço Cheio):
+                                        Subtotal:
                                         <span class="fw-bold">@subtotalOriginal.ToString("C2")</span>
                                     </li>
 
-                                    @if (descontoTotalExibido > 0)
+                                    @if (descontoTotalExibido > 0.00m)
                                     {
                                         <li class="list-group-item d-flex justify-content-between text-success">
-                                            Desconto Promocional:
+                                            Desconto:
                                             <span class="fw-bold">- @descontoTotalExibido.ToString("C2")</span>
                                         </li>
                                     }
@@ -89,19 +91,23 @@ else
 
                         <h5 class="mt-4">Itens Comprados:</h5>
                         <ul class="list-group">
-                            @foreach (var item in pedido.ItensPedido)
+                            @foreach (ItemPedido item in pedido.ItensPedido ?? Enumerable.Empty<ItemPedido>())
                             {
+                                decimal precoTabela = item.Produto?.Preco ?? 0.00m;
+
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                     <span>
-                                        @item.Quantidade x @item.Produto.Nome
-                                        @if (item.Produto.Preco > item.PrecoUnitario)
+                                        @item.Quantidade x @(item.Produto?.Nome ?? "Produto Indisponível")
+
+                                        @if (precoTabela > item.Produto.PrecoPromocional && item.Produto.PrecoPromocional > 0)
                                         {
                                             <span class="badge bg-danger ms-2">Em Promoção</span>
                                         }
-                                    </span>
-                                    <span class="badge bg-primary rounded-pill">
-                                        @item.PrecoUnitario.ToString("C2") / und.
-                                        <span class="ms-1 fw-normal text-light">(@((item.Quantidade * item.PrecoUnitario).ToString("C2")) total)</span>
+                                </span>
+                                <span class="badge bg-primary rounded-pill">
+                                    @(item.Produto.PrecoPromocional > 0
+                                                                ? item.Produto.PrecoPromocional?.ToString("C2")
+                                                                : item.Produto.Preco.ToString("C2")) / und.
                                     </span>
                                 </li>
                             }

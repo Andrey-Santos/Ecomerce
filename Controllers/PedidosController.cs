@@ -33,7 +33,7 @@ public class PedidosController : Controller
         var pedidos = await _context.Pedidos
             .Where(p => p.UsuarioId == userId)
             .Include(p => p.ItensPedido)
-                .ThenInclude(ip => ip.Produto)
+            .ThenInclude(ip => ip.Produto)
             .OrderByDescending(p => p.DataPedido)
             .ToListAsync();
 

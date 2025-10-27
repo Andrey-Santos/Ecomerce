@@ -1,4 +1,3 @@
-// Models/ItemCarrinho.cs
 using System.ComponentModel.DataAnnotations;
 
 namespace Ecomerce.Models

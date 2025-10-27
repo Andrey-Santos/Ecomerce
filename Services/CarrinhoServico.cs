@@ -138,18 +138,16 @@ namespace Ecomerce.Services
             var variacaoIds = itens.Select(i => i.VariacaoId).ToList();
 
             var variacoesComProdutos = _context.Variacoes
-                .Include(v => v.Produto)
-                .Where(v => variacaoIds.Contains(v.Id))
-                .ToList();
+                                               .Include(v => v.Produto)
+                                               .Where(v => variacaoIds.Contains(v.Id))
+                                               .ToList();
 
             foreach (var item in itens)
             {
                 var variacao = variacoesComProdutos.FirstOrDefault(v => v.Id == item.VariacaoId);
 
                 if (variacao != null && variacao.Produto != null)
-                {
-                    total += variacao.Produto.Preco * item.Quantidade;
-                }
+                    total += item.Quantidade *  variacao.Produto.PrecoPromocional ?? variacao.Produto.Preco;
             }
 
             return total;
