@@ -4,57 +4,82 @@
 
 @if (Model != null && Model.Any())
 {
+    <style>
+        .carousel-nav-zone {
+            position: absolute;
+            top: 0;
+            width: 12%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color .3s;
+            cursor: pointer;
+            z-index: 5;
+        }
+
+        .carousel-nav-zone:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .carousel-prev-zone {
+            left: 0;
+        }
+
+        .carousel-next-zone {
+            right: 0;
+        }
+
+        .carousel-nav-icon {
+            background-color: #fff;
+            border-radius: 50%;
+            padding: 12px;
+            box-shadow: 0 0 8px rgba(0, 0, 0, .15);
+        }
+
+        .carousel-inner .row {
+            justify-content: center;
+        }
+
+        /* Cards ocupam mais espaço quando há poucos itens */
+        .carousel-inner .col-auto {
+            flex: 0 0 auto;
+        }
+    </style>
+
     <h2 class="text-center my-4">🔥 Produtos em Destaque</h2>
 
-    <div id="carouselExampleControls" class="carousel slide bg-light p-3 shadow-sm rounded" data-bs-ride="carousel">
-        <div class="carousel-inner">
-            @{
-                int count = 0;
-            }
-            @foreach (Produto produto in Model)
-            {
-                <div class="carousel-item @(count == 0 ? "active" : "")">
-                    <div class="row align-items-center">
-                        <div class="col-md-5 text-center">
-                            <img src="@produto.ImagemUrl" class="d-block w-100 img-fluid" style="max-height: 300px; object-fit: contain;" alt="@produto.Nome">
-                        </div>
-                        <div class="col-md-7 p-4">
-                            <h3>@produto.Nome</h3>
-                            <p>@produto.Descricao.Truncate(150)</p>
+    <div class="position-relative">
 
-                            @if (produto.PrecoPromocional.HasValue && produto.PrecoPromocional < produto.Preco)
+        <div id="carouselPromocao" class="carousel slide" data-bs-ride="carousel">
+            <div class="carousel-inner">
+
+                @for (int i = 0; i < Model.Count; i += 4)
+                {
+                    var itens = Model.Skip(i).Take(4).ToList();
+                    <div class="carousel-item @(i == 0 ? "active" : "")">
+                        <div class="row g-3">
+
+                            @foreach (Produto produto in itens)
                             {
-                                <div class="d-flex align-items-baseline">
-                                    <p class="text-muted text-decoration-line-through me-3">
-                                        @produto.Preco.ToString("C", new CultureInfo("pt-BR"))
-                                    </p>
-                                    <h4 class="text-danger fw-bold">
-                                        @produto.PrecoPromocional.Value.ToString("C", new CultureInfo("pt-BR"))
-                                    </h4>
+                                <div class="col-12 col-sm-6 col-lg-3 col-auto">
+                                    @await Html.PartialAsync("_CardProduto", produto)
                                 </div>
                             }
-                            else
-                            {
-                                <h4 class="text-primary fw-bold">
-                                    @produto.Preco.ToString("C", new CultureInfo("pt-BR"))
-                                </h4>
-                            }
 
-                            <a asp-controller="Produtos" asp-action="Details" asp-route-id="@produto.Id" class="btn btn-danger mt-3">Ver Detalhes</a>
                         </div>
                     </div>
-                </div>
-                count++;
-            }
+                }
+
+            </div>
         </div>
-        
-        <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleControls" data-bs-slide="prev">
-            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Anterior</span>
-        </button>
-        <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleControls" data-bs-slide="next">
-            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Próximo</span>
-        </button>
+
+        <div class="carousel-nav-zone carousel-prev-zone" data-bs-target="#carouselPromocao" data-bs-slide="prev">
+            <span class="carousel-nav-icon carousel-control-prev-icon"></span>
+        </div>
+
+        <div class="carousel-nav-zone carousel-next-zone" data-bs-target="#carouselPromocao" data-bs-slide="next">
+            <span class="carousel-nav-icon carousel-control-next-icon"></span>
+        </div>
     </div>
 }

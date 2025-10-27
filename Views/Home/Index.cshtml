@@ -8,7 +8,7 @@
 <div class="container my-5">
 
     @await Component.InvokeAsync("CarrosselPromocao")
-    
+
     <hr class="my-5" />
 
     <div class="text-center mb-5">
@@ -37,41 +37,7 @@
         <div class="row row-cols-1 row-cols-md-3 g-4">
             @foreach (Produto produto in Model)
             {
-                <div class="col">
-                    <div class="card h-100 shadow-sm">
-                        <img src="@produto.ImagemUrl" class="card-img-top" alt="@produto.Nome"
-                            style="height: 250px; object-fit: cover;">
-
-                        <div class="card-body d-flex flex-column">
-                            <h5 class="card-title">@produto.Nome</h5>
-                            <p class="card-text text-muted flex-grow-1">@produto.Descricao</p>
-                            
-                            @if (produto.EmPromocao && produto.PrecoPromocional.HasValue && produto.PrecoPromocional.Value < produto.Preco)
-                            {
-                                <div class="d-flex flex-column mt-auto">
-                                    <span class="text-decoration-line-through text-muted small">
-                                        De: @produto.Preco.ToString("C", new CultureInfo("pt-BR"))
-                                    </span>
-                                    <h4 class="text-danger fw-bold">
-                                        Por: @produto.PrecoPromocional.Value.ToString("C", new CultureInfo("pt-BR"))
-                                        <span class="badge bg-danger ms-2">PROMOÇÃO</span>
-                                    </h4>
-                                </div>
-                            }
-                            else
-                            {
-                                <h4 class="text-success mt-auto">
-                                    @produto.Preco.ToString("C", new CultureInfo("pt-BR"))
-                                </h4>
-                            }
-
-                            <a asp-controller="Produtos" asp-action="Details" asp-route-id="@produto.Id"
-                                class="btn btn-primary mt-2">
-                                Ver Detalhes
-                            </a>
-                        </div>
-                    </div>
-                </div>
+                @await Html.PartialAsync("_CardProduto", produto)
             }
         </div>
     }

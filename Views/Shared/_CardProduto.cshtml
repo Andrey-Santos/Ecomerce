@@ -1,0 +1,45 @@
+@model Ecomerce.Models.Produto
+@using System.Globalization
+@using Humanizer;
+
+<div class="card h-100 shadow-sm border-0 rounded-3">
+    <div class="ratio ratio-1x1">
+        <img src="@Model.ImagemUrl" class="card-img-top" style="object-fit: cover;">
+    </div>
+
+    <div class="card-body d-flex flex-column">
+        <h6 class="fw-semibold text-truncate">@Model.Nome</h6>
+
+        <div class="card-preco-area mt-2">
+            @if (Model.PrecoPromocional.HasValue && Model.PrecoPromocional < Model.Preco)
+            {
+                <span class="text-decoration-line-through text-muted small">
+                    @Model.Preco.ToString("C", new CultureInfo("pt-BR"))
+                </span>
+
+                <h5 class="text-danger fw-bold m-0">
+                    @Model.PrecoPromocional.Value.ToString("C", new CultureInfo("pt-BR"))
+                </h5>
+            }
+            else
+            {
+                <h5 class="text-primary fw-bold m-0">
+                    @Model.Preco.ToString("C", new CultureInfo("pt-BR"))
+                </h5>
+            }
+        </div>
+
+        <a asp-controller="Produtos" asp-action="Details" asp-route-id="@Model.Id"
+           class="btn btn-outline-primary w-100 rounded-pill mt-auto">
+            Ver Detalhes
+        </a>
+    </div>
+</div>
+<style>
+    .card-preco-area {
+    min-height: 48px; /* força mesma altura */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+</style>
