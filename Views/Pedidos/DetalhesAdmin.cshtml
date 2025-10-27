@@ -1,84 +1,175 @@
 @model Pedido
+@using Ecomerce.Models
 
 @{
-    ViewData["Title"] = $"Detalhes do Pedido #{Model.Id}";
+    ViewData["Title"] = $"Pedido #{Model.Id}";
     var statusList = ViewData["StatusList"] as List<string>;
+
+    decimal subtotalTabelaTotal = Model.ItensPedido?.Sum(item => item.Quantidade * (item.Produto?.Preco ?? 0.00m)) ?? 0.00m;
+    decimal descontoTotalExibido = subtotalTabelaTotal - Model.TotalPedido;
+
+    string nomeCliente = Model.NomeCliente ?? "N/A";
+    string endereco = Model.Endereco ?? "N/A";
+    string cidade = Model.Cidade ?? "N/A";
 }
 
-<h1>Detalhes do Pedido **#@Model.Id**</h1>
-<hr />
-
-<div class="row">
-    <div class="col-md-5">
-        <h4>Dados do Cliente e Envio</h4>
-        <div class="card p-3 mb-4">
-            <dl class="row">
-                <dt class="col-sm-4">Cliente:</dt>
-                <dd class="col-sm-8">@Model.Usuario.Email</dd>
-                
-                <dt class="col-sm-4">Recebedor:</dt>
-                <dd class="col-sm-8">@Model.NomeCliente</dd>
-
-                <dt class="col-sm-4">Endereço:</dt>
-                <dd class="col-sm-8">@Model.Endereco, @Model.Cidade</dd>
-                
-                <dt class="col-sm-4">Data:</dt>
-                <dd class="col-sm-8">@Model.DataPedido.ToString("dd/MM/yyyy HH:mm")</dd>
-            </dl>
-        </div>
-        
-        <h4>Gerenciar Status</h4>
-        <div class="card p-3 bg-light">
-            <form asp-action="AlterarStatus" method="post">
-                <input type="hidden" name="id" value="@Model.Id" />
-                <div class="input-group">
-                    <select name="novoStatus" class="form-select">
-                        @foreach (var status in statusList!)
-                        {
-                            <option value="@status" selected="@(status == Model.Status)">
-                                @status
-                            </option>
-                        }
-                    </select>
-                    <button type="submit" class="btn btn-warning">
-                        Atualizar Status
-                    </button>
-                </div>
-                <p class="mt-2">Status Atual: <span class="badge bg-primary">@Model.Status</span></p>
-            </form>
-        </div>
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="fw-bold text-primary">
+            <i class="bi bi-receipt-cutoff me-2"></i> Pedido #@Model.Id
+        </h2>
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Voltar à Lista
+        </a>
     </div>
-    
-    <div class="col-md-7">
-        <h4>Itens da Compra</h4>
-        <table class="table table-bordered">
-            <thead class="table-dark">
-                <tr>
-                    <th>Produto</th>
-                    <th class="text-center">Qtd</th>
-                    <th class="text-end">Preço Unit.</th>
-                    <th class="text-end">Subtotal</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model.ItensPedido)
-                {
-                    <tr>
-                        <td>@item.Produto!.Nome</td>
-                        <td class="text-center">@item.Quantidade</td>
-                        <td class="text-end">@item.PrecoUnitario.ToString("C2")</td>
-                        <td class="text-end">@((item.Quantidade * item.PrecoUnitario).ToString("C2"))</td>
-                    </tr>
-                }
-            </tbody>
-            <tfoot>
-                <tr class="fw-bold">
-                    <td colspan="3" class="text-end">Total do Pedido:</td>
-                    <td class="text-end bg-info text-white">@Model.TotalPedido.ToString("C2")</td>
-                </tr>
-            </tfoot>
-        </table>
-        
-        <a asp-action="Index" class="btn btn-secondary mt-3">&laquo; Voltar à Lista</a>
+    <hr />
+
+    <div class="row g-4">
+        <!-- Dados do Cliente -->
+        <div class="col-md-5">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white fw-bold">
+                    <i class="bi bi-person-lines-fill me-1"></i> Dados do Cliente e Envio
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">Cliente:</dt>
+                        <dd class="col-sm-8">@Model.Usuario.Email</dd>
+
+                        <dt class="col-sm-4">Recebedor:</dt>
+                        <dd class="col-sm-8">@nomeCliente</dd>
+
+                        <dt class="col-sm-4">Endereço:</dt>
+                        <dd class="col-sm-8">@endereco, @cidade</dd>
+
+                        <dt class="col-sm-4">Data:</dt>
+                        <dd class="col-sm-8">@Model.DataPedido.ToString("dd/MM/yyyy HH:mm")</dd>
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Gerenciar Status -->
+            <div class="card mt-4 shadow-sm border-0">
+                <div class="card-header bg-warning text-dark fw-bold">
+                    <i class="bi bi-gear me-1"></i> Gerenciar Status
+                </div>
+                <div class="card-body bg-light">
+                    <form asp-action="AlterarStatus" method="post">
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <div class="input-group">
+                            <select name="novoStatus" class="form-select">
+                                @foreach (var status in statusList!)
+                                {
+                                    <option value="@status" selected="@(status == Model.Status)">
+                                        @status
+                                    </option>
+                                }
+                            </select>
+                            <button type="submit" class="btn btn-warning fw-bold">
+                                <i class="bi bi-arrow-repeat me-1"></i> Atualizar
+                            </button>
+                        </div>
+                        <p class="mt-2 mb-0">Status Atual: <span class="badge bg-primary">@Model.Status</span></p>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Resumo Financeiro -->
+            <div class="card mt-4 shadow-sm border-0">
+                <div class="card-header bg-info text-white fw-bold">
+                    <i class="bi bi-cash-coin me-1"></i> Resumo Financeiro
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between">
+                        Subtotal (Preço Tabela)
+                        <span class="fw-bold">@subtotalTabelaTotal.ToString("C2")</span>
+                    </li>
+
+                    @if (descontoTotalExibido > 0.00m)
+                    {
+                        <li class="list-group-item d-flex justify-content-between text-success fw-bold">
+                            Desconto Total
+                            <span class="text-danger">-@descontoTotalExibido.ToString("C2")</span>
+                        </li>
+                    }
+
+                    <li class="list-group-item d-flex justify-content-between bg-success text-white fw-bolder">
+                        Total Final
+                        <span>@Model.TotalPedido.ToString("C2")</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Itens da Compra -->
+        <div class="col-md-7">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-dark text-white fw-bold">
+                    <i class="bi bi-bag-check me-1"></i> Itens da Compra
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped align-middle mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Produto</th>
+                                <th class="text-center">Qtd</th>
+                                <th class="text-end">Tabela</th>
+                                <th class="text-end">Cobrado</th>
+                                <th class="text-end">Desc. Unit.</th>
+                                <th class="text-end">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.ItensPedido)
+                            {
+                                decimal precoTabela = item.Produto?.Preco ?? 0.00m;
+                                decimal precoPromocional = item.Produto?.PrecoPromocional ?? 0.00m;
+                                decimal precoCobrado = item.PrecoUnitario;
+                                decimal descontoUnitario = precoTabela - (precoPromocional > 0 ? precoPromocional : precoTabela);
+
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold">
+                                            @(item.Produto?.Nome ?? "Produto Indisponível")
+                                            @if (item.Variacao != null && !string.IsNullOrEmpty(item.Variacao.Nome))
+                                            {
+                                                <span class="d-block text-muted small">(@(item.Variacao?.Nome))</span>
+                                            }
+                                        </div>
+
+                                        @if (descontoUnitario > 0.00m)
+                                        {
+                                            <span class="badge bg-danger mt-1">Promoção</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">@item.Quantidade</td>
+                                    <td class="text-end">
+                                        @if (descontoUnitario > 0.00m)
+                                        {
+                                            <del class="text-muted">@precoTabela.ToString("C2")</del>
+                                        }
+                                        else
+                                        {
+                                            <span>@precoTabela.ToString("C2")</span>
+                                        }
+                                    </td>
+                                    <td class="text-end fw-bold">@precoCobrado.ToString("C2")</td>
+                                    <td class="text-end text-danger">
+                                        @(descontoUnitario > 0 ? descontoUnitario.ToString("C2") : "-")
+                                    </td>
+                                    <td class="text-end fw-bold">@((item.Quantidade * precoCobrado).ToString("C2"))</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot class="bg-light fw-bold">
+                            <tr>
+                                <td colspan="5" class="text-end">Total Cobrado:</td>
+                                <td class="text-end">@Model.TotalPedido.ToString("C2")</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 </div>

@@ -77,12 +77,13 @@ public class PedidosController : Controller
         if (id == null)
             return NotFound();
 
-        // Carrega o Pedido, o Usuário, os Itens do Pedido e o Produto de cada Item
         var pedido = await _context.Pedidos
             .Include(p => p.Usuario)
             .Include(p => p.ItensPedido)
                 .ThenInclude(ip => ip.Produto)
-            .FirstOrDefaultAsync(m => m.Id == id);
+            .Include(p => p.ItensPedido)
+                .ThenInclude(ip => ip.Variacao)
+            .FirstOrDefaultAsync(p => p.Id == id);
 
         if (pedido == null)
             return NotFound();
