@@ -1,4 +1,3 @@
-// Models/ItemPedido.cs
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -26,5 +25,11 @@ namespace Ecomerce.Models
 
         [Column(TypeName = "decimal(10, 2)")]
         public decimal PrecoUnitario { get; set; }
+        
+        [Column(TypeName = "decimal(10, 2)")]
+        public decimal PrecoTabela { get; set; } 
+        
+        [Column(TypeName = "decimal(10, 2)")]
+        public decimal? PrecoPromocional { get; set; }
     }
 }

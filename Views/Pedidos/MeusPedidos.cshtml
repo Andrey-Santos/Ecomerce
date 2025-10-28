@@ -43,13 +43,10 @@ else
 
                         @{
                             decimal subtotalOriginal = pedido.ItensPedido?.Sum(item =>
-                            item.Quantidade * (item.Produto?.Preco ?? item.PrecoUnitario)) ?? 0.00m;
+                                item.Quantidade * (item.PrecoTabela > 0 ? item.PrecoTabela : item.PrecoUnitario)) ?? 0.00m;
 
-                            decimal subtotalFinal = pedido.ItensPedido?.Sum(item =>
-                            item.Quantidade * (item.Produto?.PrecoPromocional ?? item.PrecoUnitario)) ?? 0.00m;
-
-
-                            decimal descontoTotalExibido = subtotalOriginal - subtotalFinal;
+                            decimal totalItens = pedido.ItensPedido?.Sum(item => item.Quantidade * item.PrecoUnitario) ?? 0.00m;
+                            decimal descontoTotalExibido = subtotalOriginal - totalItens;
 
                             string nomeCliente = pedido.NomeCliente ?? "N/A";
                             string endereco = pedido.Endereco ?? "N/A";
@@ -93,21 +90,20 @@ else
                         <ul class="list-group">
                             @foreach (ItemPedido item in pedido.ItensPedido ?? Enumerable.Empty<ItemPedido>())
                             {
-                                decimal precoTabela = item.Produto?.Preco ?? 0.00m;
+                                decimal precoFinalCobrado = item.PrecoUnitario;
+                                bool temPromocao = item.PrecoTabela > item.PrecoUnitario;
 
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                     <span>
                                         @item.Quantidade x @(item.Produto?.Nome ?? "Produto Indisponível")
 
-                                        @if (precoTabela > item.Produto.PrecoPromocional && item.Produto.PrecoPromocional > 0)
+                                        @if (temPromocao)
                                         {
                                             <span class="badge bg-danger ms-2">Em Promoção</span>
                                         }
-                                </span>
-                                <span class="badge bg-primary rounded-pill">
-                                    @(item.Produto.PrecoPromocional > 0
-                                                                ? item.Produto.PrecoPromocional?.ToString("C2")
-                                                                : item.Produto.Preco.ToString("C2")) / und.
+                                    </span>
+                                    <span class="badge bg-primary rounded-pill">
+                                        @precoFinalCobrado.ToString("C2") / und.
                                     </span>
                                 </li>
                             }

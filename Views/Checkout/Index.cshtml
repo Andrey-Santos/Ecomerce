@@ -8,7 +8,6 @@
 <div class="container mt-5">
     <div class="row g-4 align-items-stretch">
 
-        <!-- FORMULÁRIO DE ENTREGA -->
         <div class="col-lg-6 d-flex">
             <div class="card shadow-lg border-0 rounded-4 h-100 w-100">
                 <div class="card-header bg-primary text-white text-center py-3 rounded-top-4">
@@ -57,8 +56,8 @@
                         var carrinhoItens = ViewBag.CarrinhoItens as List<ItemCarrinho>;
                         decimal totalFinal = ViewBag.TotalCarrinho ?? 0.00m;
 
-                        decimal subtotal = 0.00m;
-                        decimal economiaPrecoCheio = 0.00m;
+                        decimal subtotalOriginal = 0.00m;
+                        decimal economiaTotal = 0.00m;
                     }
 
                     <table class="table align-middle">
@@ -73,16 +72,22 @@
                             {
                                 @foreach (ItemCarrinho item in carrinhoItens)
                                 {
-                                    decimal precoOriginal = item.Produto.Preco;
-                                    decimal precoFinal = item.Produto.PrecoPromocional ?? precoOriginal;
-                                    bool temPromocao = precoFinal < precoOriginal;
+                                    // Utiliza item.PrecoTabela (preço original) e item.PrecoPromocional (preço com desconto)
+                                    decimal precoTabela = item.PrecoTabela;
+                                    decimal precoPromocional = item.PrecoPromocional ?? 0.00m;
+                                    
+                                    decimal precoFinal = precoPromocional > 0 && precoPromocional < precoTabela 
+                                                         ? precoPromocional 
+                                                         : precoTabela;
+                                    
+                                    bool temPromocao = precoFinal < precoTabela;
 
-                                    subtotal += precoOriginal * item.Quantidade;
-                                    economiaPrecoCheio += (precoOriginal - precoFinal) * item.Quantidade;
+                                    subtotalOriginal += precoTabela * item.Quantidade;
+                                    economiaTotal += (precoTabela - precoFinal) * item.Quantidade;
 
                                     <tr>
                                         <td>
-                                            <strong>@item.Quantidade x @item.Produto.Nome</strong>
+                                            <strong>@item.Quantidade x @(item.Produto?.Nome ?? "Produto Indisponível")</strong>
                                             @if (temPromocao)
                                             {
                                                 <span class="badge bg-danger ms-2">Promo</span>
@@ -95,14 +100,14 @@
                         </tbody>
                         <tfoot>
                             <tr class="table-light">
-                                <td class="fw-bold text-end">Subtotal:</td>
-                                <td class="fw-bold text-end">@subtotal.ToString("C2")</td>
+                                <td class="fw-bold text-end">Subtotal (Preço Tabela):</td>
+                                <td class="fw-bold text-end">@subtotalOriginal.ToString("C2")</td>
                             </tr>
-                            @if (economiaPrecoCheio > 0)
+                            @if (economiaTotal > 0)
                             {
                                 <tr class="table-success">
                                     <td class="fw-bold text-end text-success">Você economizou:</td>
-                                    <td class="fw-bold text-end text-success">- @economiaPrecoCheio.ToString("C2")</td>
+                                    <td class="fw-bold text-end text-success">- @economiaTotal.ToString("C2")</td>
                                 </tr>
                             }
                             <tr class="table-dark text-white">

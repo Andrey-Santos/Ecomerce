@@ -1,22 +1,23 @@
 @model List<Ecomerce.Models.ItemCarrinho>
 @using System.Globalization
+@using Ecomerce.Models
 
 @{
     ViewData["Title"] = "Seu Carrinho de Compras";
-
-    var totalGeral = Model
+    var ptBR = new CultureInfo("pt-BR");
+    
+    decimal totalGeral = Model
         .Sum(item => 
         {
-            decimal precoUnitario = item.Produto.Preco;
-            if (item.Produto.PrecoPromocional.HasValue && item.Produto.PrecoPromocional.Value < item.Produto.Preco)
-            {
-                precoUnitario = item.Produto.PrecoPromocional.Value;
-            }
-            return precoUnitario * item.Quantidade;
+            decimal precoUnitarioFinal = item.PrecoPromocional.HasValue && item.PrecoPromocional.Value > 0
+                ? item.PrecoPromocional.Value
+                : item.PrecoTabela;
+            
+            return precoUnitarioFinal * item.Quantidade;
         });
 
-    var subtotalOriginal = Model.Sum(item => item.Produto.Preco * item.Quantidade);
-    var totalDesconto = subtotalOriginal - totalGeral;
+    decimal subtotalOriginal = Model.Sum(item => item.PrecoTabela * item.Quantidade);
+    decimal totalDesconto = subtotalOriginal - totalGeral;
 }
 
 <h1>Seu Carrinho de Compras</h1>
@@ -47,65 +48,61 @@ else
                 <tbody>
                     @foreach (ItemCarrinho item in Model)
                     {
-                        Produto produto = item.Produto;
-                        
-                        decimal precoUnitario = produto.Preco;
-                        bool isPromocao = produto.PrecoPromocional.HasValue && produto.PrecoPromocional.Value < produto.Preco;
-                        if (isPromocao)
-                        {
-                            precoUnitario = produto.PrecoPromocional.Value;
-                        }
+                        decimal precoUnitarioFinal = item.PrecoPromocional.HasValue && item.PrecoPromocional.Value > 0
+                            ? item.PrecoPromocional.Value
+                            : item.PrecoTabela;
 
-                        if (produto != null)
-                        {
-                            <tr>
-                                <td>
-                                    <img src="@produto.ImagemUrl" alt="@produto.Nome" style="width: 80px; height: 80px; object-fit: cover;" class="img-thumbnail" />
-                                </td>
-                                <td>
-                                    <h5 class="mb-1">@produto.Nome</h5>
-                                    @if (!string.IsNullOrEmpty(item.NomeVariacao))
-                                    {
-                                        <small class="text-muted">Sabor: @item.NomeVariacao</small>
-                                    }
-                                    else
-                                    {
-                                        <small class="text-danger">Sabor não especificado</small>
-                                    }
-                                </td>
-                                <td>
-                                    @if (isPromocao)
-                                    {
-                                        <div class="d-flex flex-column">
-                                            <span class="text-muted text-decoration-line-through small">
-                                                @produto.Preco.ToString("C", new CultureInfo("pt-BR"))
-                                            </span>
-                                            <span class="text-danger fw-bold">
-                                                @precoUnitario.ToString("C", new CultureInfo("pt-BR"))
-                                            </span>
-                                        </div>
-                                    }
-                                    else
-                                    {
-                                        @precoUnitario.ToString("C", new CultureInfo("pt-BR"))
-                                    }
-                                </td>
-                                <td>
-                                    @item.Quantidade
-                                </td>
-                                <td>
-                                    @((precoUnitario * item.Quantidade).ToString("C", new CultureInfo("pt-BR")))
-                                </td>
-                                <td>
-                                    <form asp-controller="Carrinho" asp-action="Remover" method="post" class="d-inline">
-                                        <input type="hidden" name="variacaoId" value="@item.VariacaoId" />
-                                        <button type="submit" class="btn btn-sm btn-danger" title="Remover Item">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
-                                </td>
-                            </tr>
-                        }
+                        bool isPromocao = item.PrecoPromocional.HasValue && item.PrecoPromocional.Value > 0 && item.PrecoPromocional.Value < item.PrecoTabela;
+                        
+                        Produto produto = item.Produto ?? new Produto { Nome = "Item Removido" }; 
+                        
+                        <tr>
+                            <td>
+                                <img src="@produto.ImagemUrl" alt="@produto.Nome" style="width: 80px; height: 80px; object-fit: cover;" class="img-thumbnail" />
+                            </td>
+                            <td>
+                                <h5 class="mb-1">@produto.Nome</h5>
+                                @if (!string.IsNullOrEmpty(item.NomeVariacao))
+                                {
+                                    <small class="text-muted">Sabor: @item.NomeVariacao</small>
+                                }
+                                else
+                                {
+                                    <small class="text-danger">Sabor não especificado</small>
+                                }
+                            </td>
+                            <td>
+                                @if (isPromocao)
+                                {
+                                    <div class="d-flex flex-column">
+                                        <span class="text-muted text-decoration-line-through small">
+                                            @item.PrecoTabela.ToString("C", ptBR)
+                                        </span>
+                                        <span class="text-danger fw-bold">
+                                            @precoUnitarioFinal.ToString("C", ptBR)
+                                        </span>
+                                    </div>
+                                }
+                                else
+                                {
+                                    @precoUnitarioFinal.ToString("C", ptBR)
+                                }
+                            </td>
+                            <td>
+                                @item.Quantidade
+                            </td>
+                            <td>
+                                @((precoUnitarioFinal * item.Quantidade).ToString("C", ptBR))
+                            </td>
+                            <td>
+                                <form asp-controller="Carrinho" asp-action="RemoverItem" method="post" class="d-inline">
+                                    <input type="hidden" name="variacaoId" value="@item.VariacaoId" />
+                                    <button type="submit" class="btn btn-sm btn-danger" title="Remover Item">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
                     }
                 </tbody>
             </table>
@@ -119,20 +116,20 @@ else
                     
                     <div class="d-flex justify-content-between mb-2">
                         <p class="mb-0">Subtotal Original:</p>
-                        <p class="mb-0 fw-bold">@subtotalOriginal.ToString("C", new CultureInfo("pt-BR"))</p>
+                        <p class="mb-0 fw-bold">@subtotalOriginal.ToString("C", ptBR)</p>
                     </div>
 
                     @if (totalDesconto > 0)
                     {
                         <div class="d-flex justify-content-between mb-3 text-danger">
                             <p class="mb-0">Economia Total:</p>
-                            <p class="mb-0 fw-bold">- @totalDesconto.ToString("C", new CultureInfo("pt-BR"))</p>
+                            <p class="mb-0 fw-bold">- @totalDesconto.ToString("C", ptBR)</p>
                         </div>
                     }
 
                     <div class="d-flex justify-content-between h4 border-top pt-2">
                         <p class="mb-0 fw-bold">Total a Pagar:</p>
-                        <p class="mb-0 text-success fw-bolder">@totalGeral.ToString("C", new CultureInfo("pt-BR"))</p>
+                        <p class="mb-0 text-success fw-bolder">@totalGeral.ToString("C", ptBR)</p>
                     </div>
                     
                     <a asp-controller="Checkout" asp-action="Index" class="btn btn-success w-100 mt-3">Finalizar Compra</a>

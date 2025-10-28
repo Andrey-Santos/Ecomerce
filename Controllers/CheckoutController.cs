@@ -51,6 +51,10 @@ public class CheckoutController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Index([Bind("NomeCliente,Endereco,Cidade")] Pedido pedido)
     {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+            throw new Exception("Usuário não autenticado.");
+            
         var carrinhoItens = await _carrinhoServico.ObterDetalhesDoCarrinho();
 
         if (!ModelState.IsValid || !carrinhoItens.Any())
@@ -70,18 +74,14 @@ public class CheckoutController : Controller
             return View(pedido);
         }
 
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userId))
-            throw new Exception("Usuário não autenticado.");
-
         using (var transaction = await _context.Database.BeginTransactionAsync())
         {
             try
             {
                 var variacaoIds = carrinhoItens.Select(i => i.VariacaoId).ToList();
                 var variacoesDb = await _context.Variacoes
-                                                .Where(v => variacaoIds.Contains(v.Id))
-                                                .ToListAsync();
+                                                 .Where(v => variacaoIds.Contains(v.Id))
+                                                 .ToListAsync();
 
                 foreach (var itemCarrinho in carrinhoItens)
                 {
@@ -122,18 +122,21 @@ public class CheckoutController : Controller
 
                 foreach (ItemCarrinho itemCarrinho in carrinhoItens)
                 {
-                    var produto = itemCarrinho.Produto;
-                    var variacao = variacoesDb.FirstOrDefault(v => v.Id == itemCarrinho.VariacaoId);
-
-                    if (produto == null || variacao == null) continue;
+                    decimal precoFinalCobrado = itemCarrinho.PrecoPromocional.HasValue && itemCarrinho.PrecoPromocional.Value > 0
+                        ? itemCarrinho.PrecoPromocional.Value
+                        : itemCarrinho.PrecoTabela;
 
                     var itemPedido = new ItemPedido
                     {
                         PedidoId = novoPedido.Id,
-                        ProdutoId = produto.Id,
+                        ProdutoId = itemCarrinho.ProdutoId,
                         VariacaoId = itemCarrinho.VariacaoId,
                         Quantidade = itemCarrinho.Quantidade,
-                        PrecoUnitario = produto.Preco
+                        
+                        PrecoTabela = itemCarrinho.PrecoTabela,
+                        PrecoPromocional = itemCarrinho.PrecoPromocional,
+                        
+                        PrecoUnitario = precoFinalCobrado
                     };
                     _context.ItensPedido.Add(itemPedido);
                 }
