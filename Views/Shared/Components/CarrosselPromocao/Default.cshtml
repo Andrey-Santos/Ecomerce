@@ -5,81 +5,150 @@
 @if (Model != null && Model.Any())
 {
     <style>
-        .carousel-nav-zone {
+        .carousel-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        /* Área que contém os produtos */
+        .carousel-track {
+            display: flex;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            gap: 1rem;
+            padding: 10px 0;
+        }
+
+        .carousel-track::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Cada card de produto */
+        .carousel-item-card {
+            flex: 0 0 auto;
+            width: 85%;
+            max-width: 500px;
+        }
+
+        /* Responsivo */
+        @@media (min-width: 576px) {
+            .carousel-item-card { width: 48%; }
+        }
+
+        @@media (min-width: 992px) {
+            .carousel-item-card { width: 23%; }
+        }
+
+        /* Botões laterais (desktop) */
+        .carousel-nav {
             position: absolute;
-            top: 0;
-            width: 12%;
-            height: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: #fff;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+            cursor: pointer;
+        }
+
+        .carousel-nav svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .carousel-prev { left: -20px; }
+        .carousel-next { right: -20px; }
+
+        @@media (min-width: 992px) {
+            .carousel-nav { display: flex; }
+        }
+
+        /* Botões inferiores no mobile */
+        .carousel-mobile-nav {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .carousel-mobile-nav button {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: #fff;
+            border: 1px solid rgba(0, 0, 0, 0.1);
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: background-color .3s;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
             cursor: pointer;
-            z-index: 5;
         }
 
-        .carousel-nav-zone:hover {
-            background-color: rgba(0, 0, 0, 0.05);
-        }
-
-        .carousel-prev-zone {
-            left: 0;
-        }
-
-        .carousel-next-zone {
-            right: 0;
-        }
-
-        .carousel-nav-icon {
-            background-color: #fff;
-            border-radius: 50%;
-            padding: 12px;
-            box-shadow: 0 0 8px rgba(0, 0, 0, .15);
-        }
-
-        .carousel-inner .row {
-            justify-content: center;
-        }
-
-        /* Cards ocupam mais espaço quando há poucos itens */
-        .carousel-inner .col-auto {
-            flex: 0 0 auto;
+        @@media (min-width: 992px) {
+            .carousel-mobile-nav { display: none; }
         }
     </style>
 
     <h2 class="text-center my-4">🔥 Produtos em Destaque</h2>
 
-    <div class="position-relative">
+    <div class="carousel-wrapper">
+        <!-- Botões laterais (desktop) -->
+        <button class="carousel-nav carousel-prev" id="btnPrev">
+            <svg viewBox="0 0 20 20" fill="none"><path d="M12 4L6 10l6 6" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+        </button>
 
-        <div id="carouselPromocao" class="carousel slide" data-bs-ride="carousel">
-            <div class="carousel-inner">
+        <button class="carousel-nav carousel-next" id="btnNext">
+            <svg viewBox="0 0 20 20" fill="none"><path d="M8 16l6-6-6-6" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+        </button>
 
-                @for (int i = 0; i < Model.Count; i += 4)
-                {
-                    var itens = Model.Skip(i).Take(4).ToList();
-                    <div class="carousel-item @(i == 0 ? "active" : "")">
-                        <div class="row g-3">
-
-                            @foreach (Produto produto in itens)
-                            {
-                                <div class="col-12 col-sm-6 col-lg-3 col-auto">
-                                    @await Html.PartialAsync("_CardProduto", produto)
-                                </div>
-                            }
-
-                        </div>
-                    </div>
-                }
-
-            </div>
+        <!-- Faixa rolável -->
+        <div class="carousel-track" id="carouselTrack">
+            @foreach (var produto in Model)
+            {
+                <div class="carousel-item-card">
+                    @await Html.PartialAsync("_CardProduto", produto)
+                </div>
+            }
         </div>
 
-        <div class="carousel-nav-zone carousel-prev-zone" data-bs-target="#carouselPromocao" data-bs-slide="prev">
-            <span class="carousel-nav-icon carousel-control-prev-icon"></span>
-        </div>
-
-        <div class="carousel-nav-zone carousel-next-zone" data-bs-target="#carouselPromocao" data-bs-slide="next">
-            <span class="carousel-nav-icon carousel-control-next-icon"></span>
+        <!-- Navegação inferior (mobile) -->
+        <div class="carousel-mobile-nav">
+            <button id="btnPrevMobile">
+                <svg viewBox="0 0 20 20" fill="none"><path d="M12 4L6 10l6 6" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            </button>
+            <button id="btnNextMobile">
+                <svg viewBox="0 0 20 20" fill="none"><path d="M8 16l6-6-6-6" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            </button>
         </div>
     </div>
+
+    <script>
+        (function () {
+            const track = document.getElementById('carouselTrack');
+            const prevButtons = [document.getElementById('btnPrev'), document.getElementById('btnPrevMobile')];
+            const nextButtons = [document.getElementById('btnNext'), document.getElementById('btnNextMobile')];
+
+            function scroll(direction) {
+                const offset = track.clientWidth * 0.8;
+                track.scrollBy({
+                    left: direction === 'next' ? offset : -offset,
+                    behavior: 'smooth'
+                });
+            }
+
+            prevButtons.forEach(btn => btn?.addEventListener('click', () => scroll('prev')));
+            nextButtons.forEach(btn => btn?.addEventListener('click', () => scroll('next')));
+        })();
+    </script>
+}
+else
+{
+    <p class="text-center text-muted mt-4">Nenhum produto disponível no momento.</p>
 }
