@@ -10,5 +10,10 @@ namespace Ecomerce.Services
         Task<List<ItemCarrinho>> ObterDetalhesDoCarrinho();
         void LimparCarrinho();
         decimal ObterTotal(List<ItemCarrinho> itens);
+        decimal GetDescontoCupom();
+        string GetCodigoCupom();
+        Task<string> AplicarCupom(string codigoCupom);
+        void RemoverCupom();
+        decimal GetTotalPedido();
     }
 }

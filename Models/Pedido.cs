@@ -23,4 +23,10 @@ public class Pedido
     public string Endereco { get; set; } = default!;
     public string Cidade { get; set; } = default!;
     public ICollection<ItemPedido> ItensPedido { get; set; } = new List<ItemPedido>();
+    
+    [StringLength(50)]
+    public string CodigoCupom { get; set; }
+    
+    [Column(TypeName = "decimal(18, 2)")]
+    public decimal ValorDescontoCupom { get; set; }
 }

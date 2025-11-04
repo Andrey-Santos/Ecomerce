@@ -104,17 +104,23 @@ public class CheckoutController : Controller
                     variacao.Estoque -= itemCarrinho.Quantidade;
                     _context.Variacoes.Update(variacao);
                 }
-
-                decimal totalPedido = _carrinhoServico.ObterTotal(carrinhoItens);
+                
+                decimal totalFinal = _carrinhoServico.GetTotalPedido();
+                string codigoCupom = _carrinhoServico.GetCodigoCupom();
+                decimal valorDescontoCupom = _carrinhoServico.GetDescontoCupom();
+                
                 var novoPedido = new Pedido
                 {
                     UsuarioId = userId,
                     DataPedido = DateTime.Now,
-                    TotalPedido = totalPedido,
+                    TotalPedido = totalFinal,
                     Status = "Processando",
                     NomeCliente = pedido.NomeCliente,
                     Endereco = pedido.Endereco,
-                    Cidade = pedido.Cidade
+                    Cidade = pedido.Cidade,
+                    
+                    CodigoCupom = codigoCupom,
+                    ValorDescontoCupom = valorDescontoCupom
                 };
 
                 _context.Pedidos.Add(novoPedido);
@@ -145,6 +151,7 @@ public class CheckoutController : Controller
 
                 await transaction.CommitAsync();
                 _carrinhoServico.LimparCarrinho();
+                _carrinhoServico.RemoverCupom();
 
                 TempData.Put("Notificacao", new Notificacao
                 {

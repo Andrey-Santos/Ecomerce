@@ -28,9 +28,10 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
-    .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<ApplicationDbContext>();
+                                                                    .AddRoles<IdentityRole>()
+                                                                    .AddEntityFrameworkStores<ApplicationDbContext>();
 
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(20);
@@ -41,7 +42,6 @@ builder.Services.AddSession(options =>
 builder.Services.AddScoped<ICarrinhoServico, CarrinhoServico>();
 
 builder.Services.AddControllersWithViews();
-builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 

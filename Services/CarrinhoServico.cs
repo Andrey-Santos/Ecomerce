@@ -7,6 +7,7 @@ namespace Ecomerce.Services
 {
     public class CarrinhoServico : ICarrinhoServico
     {
+        private readonly ISession _session;
         private readonly ApplicationDbContext _context;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private const string ChaveCarrinho = "CarrinhoDeSessao";
@@ -14,6 +15,7 @@ namespace Ecomerce.Services
         public CarrinhoServico(IHttpContextAccessor httpContextAccessor, ApplicationDbContext context)
         {
             _httpContextAccessor = httpContextAccessor;
+            _session = httpContextAccessor.HttpContext?.Session ?? throw new InvalidOperationException("A sessão não está disponível.");
             _context = context;
         }
 
@@ -177,6 +179,82 @@ namespace Ecomerce.Services
             }
 
             return total;
+        }
+
+        public async Task<string> AplicarCupom(string codigoCupom)
+        {
+            if (string.IsNullOrWhiteSpace(codigoCupom))
+                return "O código do cupom não pode ser vazio.";
+
+            var cupom = await _context.Cupons.FirstOrDefaultAsync(c => c.Codigo.ToLower() == codigoCupom.ToLower());
+
+            if (cupom == null)
+                return "Cupom inválido ou não encontrado.";
+
+            var carrinhoItens = ObterCarrinhoDaSessao();
+            if (carrinhoItens == null || !carrinhoItens.Any())
+                return "Seu carrinho está vazio. Adicione itens antes de aplicar um cupom.";
+
+            decimal subtotal = carrinhoItens.Sum(item => item.Quantidade * item.PrecoTabela);
+
+            if (cupom.DataExpiracao.HasValue && cupom.DataExpiracao.Value < DateTime.Now)
+            {
+                return "Este cupom está expirado.";
+            }
+
+            if (subtotal < cupom.ValorMinimoPedido)
+                return $"O cupom requer um valor mínimo de pedido de {cupom.ValorMinimoPedido:C2}.";
+
+            decimal valorDesconto = 0.00m;
+
+            if (cupom.TipoDesconto == TipoDesconto.Porcentagem)
+                valorDesconto = subtotal * cupom.Valor / 100.00m;
+
+            else if (cupom.TipoDesconto == TipoDesconto.Fixo)
+                valorDesconto = cupom.Valor;
+
+            else
+                return "Tipo de desconto do cupom não reconhecido. Contate o suporte.";
+
+            valorDesconto = Math.Min(valorDesconto, subtotal);
+
+            _session.SetString("CupomCodigo", cupom.Codigo);
+            _session.SetString("DescontoCupom", valorDesconto.ToString());
+
+            return "";
+        }
+
+        public decimal GetDescontoCupom()
+        {
+            var descontoStr = _session.GetString("DescontoCupom");
+            if (decimal.TryParse(descontoStr, out decimal desconto))
+            {
+                return desconto;
+            }
+            return 0.00m;
+        }
+        public string GetCodigoCupom()
+        {
+            return _session.GetString("CupomCodigo");
+        }
+
+        public void RemoverCupom()
+        {
+            _session.Remove("CupomCodigo");
+            _session.Remove("DescontoCupom");
+        }
+
+        public decimal GetTotalPedido()
+        {
+            var carrinhoItens = ObterCarrinhoDaSessao();
+            if (carrinhoItens == null || !carrinhoItens.Any()) return 0.00m;
+
+            decimal subtotal = carrinhoItens.Sum(item => item.Quantidade * item.PrecoTabela);
+
+            decimal descontoCupom = GetDescontoCupom();
+            decimal total = subtotal - descontoCupom;
+
+            return Math.Max(0, total);
         }
     }
 }

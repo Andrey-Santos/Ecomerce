@@ -1,5 +1,4 @@
 using Ecomerce.Data;
-using Ecomerce.Models;
 using Microsoft.AspNetCore.Mvc;
 using Ecomerce.Services;
 
@@ -9,13 +8,18 @@ namespace Ecomerce.Controllers
     {
         private readonly ICarrinhoServico _carrinhoServico;
 
-        public CarrinhoController(ICarrinhoServico carrinhoServico, ApplicationDbContext context)
+        public CarrinhoController(ICarrinhoServico carrinhoServico)
         {
             _carrinhoServico = carrinhoServico;
         }
 
         public async Task<IActionResult> Index()
         {
+            if (TempData["MensagemCupom"] != null)
+            {
+                ViewBag.MensagemCupom = TempData["MensagemCupom"];
+            }
+            
             return View(await _carrinhoServico.ObterDetalhesDoCarrinho());
         }
 
@@ -26,18 +30,40 @@ namespace Ecomerce.Controllers
             if (erro != null)
                 return Json(new { success = false, message = erro });
 
+            int totalItens = _carrinhoServico.ObterItens().Sum(i => i.Quantidade);
+            
+            string mensagemSucesso =  $"Item adicionado ao carrinho!";
+
             return Json(new
             {
                 success = true,
-                message = "Sabor adicionado ao carrinho com sucesso!",
-                totalItens = _carrinhoServico.ObterItens().Count()
+                message = mensagemSucesso,
+                totalItens = totalItens
             });
         }
 
         [HttpPost]
-        public IActionResult Remover(int variacaoId)
+        public IActionResult RemoverItem(int variacaoId)
         {
             _carrinhoServico.RemoverItem(variacaoId);
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AplicarCupom(string codigoCupom)
+        {
+            string mensagem = await _carrinhoServico.AplicarCupom(codigoCupom);
+            
+            TempData["MensagemCupom"] = mensagem;
+
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        public IActionResult RemoverCupom()
+        {
+            _carrinhoServico.RemoverCupom();
+            
             return RedirectToAction("Index");
         }
     }

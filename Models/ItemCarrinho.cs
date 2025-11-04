@@ -8,19 +8,21 @@ namespace Ecomerce.Models
     {
         [Key]
         public int ProdutoId { get; set; }
-        
+
         [Column(TypeName = "decimal(18, 2)")]
         public decimal PrecoTabela { get; set; }
-        
+
         [Column(TypeName = "decimal(18, 2)")]
         public decimal? PrecoPromocional { get; set; }
 
         public int Quantidade { get; set; }
-        
-        [JsonIgnore] 
-        public Produto Produto { get; set; } 
-        
-        public int VariacaoId { get; set; } 
-        public string NomeVariacao { get; set; } = string.Empty; 
+
+        [JsonIgnore]
+        public Produto Produto { get; set; }
+
+        public int VariacaoId { get; set; }
+        public string NomeVariacao { get; set; } = string.Empty;
+        public string CupomCodigo { get; set; }
+        public decimal DescontoAplicado { get; set; }
     }
 }
