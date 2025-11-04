@@ -1,88 +1,158 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="pt-br">
 
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>@ViewData["Title"] - Ecommerce</title>
-    <script type="importmap"></script>
+
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/Ecomerce.styles.css" asp-append-version="true" />
+
+    <style>
+        /* === Ajustes de responsividade === */
+        body {
+            font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+            background-color: #f8f9fa;
+        }
+
+        .navbar {
+            padding: 0.75rem 1rem;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+
+        /* Botões e links maiores no mobile */
+        .navbar-nav .nav-link {
+            padding: 0.6rem 1rem;
+        }
+
+        .dropdown-menu {
+            border-radius: 0.5rem;
+            border: 1px solid #dee2e6;
+        }
+
+        /* Ajuste no rodapé */
+        footer {
+            text-align: center;
+            font-size: 0.9rem;
+            padding: 1rem 0;
+            background-color: #fff;
+        }
+
+        /* Menu colapsado melhor visual */
+        @@media (max-width: 576px) {
+            .navbar-nav {
+                text-align: center;
+            }
+
+            .navbar-brand {
+                font-size: 1.1rem;
+            }
+
+            .nav-item {
+                margin-bottom: 0.5rem;
+            }
+
+            .dropdown-menu {
+                text-align: center;
+            }
+        }
+    </style>
 </head>
 
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+        <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm fixed-top">
             <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Ecommerce</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
-                    aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <a class="navbar-brand text-primary" asp-area="" asp-controller="Home" asp-action="Index">
+                    <i class="bi bi-shop me-1"></i> Ecommerce
+                </a>
+
+                <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false"
+                    aria-label="Alternar navegação">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
+
+                <div class="collapse navbar-collapse" id="mainNavbar">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                            <a class="nav-link text-dark fw-medium" asp-controller="Home" asp-action="Index">
+                                <i class="bi bi-house-door"></i> Home
+                            </a>
                         </li>
 
                         @if (User.Identity!.IsAuthenticated)
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Pedidos"
-                                    asp-action="MeusPedidos">Meus Pedidos</a>
+                                <a class="nav-link text-dark fw-medium" asp-controller="Pedidos" asp-action="MeusPedidos">
+                                    <i class="bi bi-box2-heart"></i> Meus Pedidos
+                                </a>
                             </li>
                         }
+
                         @if (User.IsInRole("Admin"))
                         {
                             <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle text-dark" href="#" id="navbarAdminDropdown"
-                                    role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    **Área do Administrador**
+                                <a class="nav-link dropdown-toggle text-dark fw-medium" href="#" id="navbarAdminDropdown"
+                                   role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-gear-fill"></i> Área do Administrador
                                 </a>
-                                <ul class="dropdown-menu" aria-labelledby="navbarAdminDropdown">
+                                <ul class="dropdown-menu shadow-sm" aria-labelledby="navbarAdminDropdown">
                                     <li>
                                         <a class="dropdown-item" asp-controller="Pedidos" asp-action="Index">
-                                            <i class="fas fa-box-open"></i> Gerenciar Pedidos
+                                            <i class="bi bi-truck"></i> Gerenciar Pedidos
                                         </a>
                                     </li>
                                     <li>
                                         <a class="dropdown-item" asp-controller="Produtos" asp-action="Index">
-                                            <i class="fas fa-box-open"></i> Gerenciar Produtos
+                                            <i class="bi bi-box-seam"></i> Gerenciar Produtos
                                         </a>
                                     </li>
                                     <li>
-                                        <a class="dropdown-item" asp-area="Admin" asp-controller="Cupons"
-                                            asp-action="Index">
-                                            <i class="fas fa-box-open"></i> Gerenciar Cupons
+                                        <a class="dropdown-item" asp-area="Admin" asp-controller="Cupons" asp-action="Index">
+                                            <i class="bi bi-ticket-perforated"></i> Gerenciar Cupons
                                         </a>
                                     </li>
                                 </ul>
                             </li>
                         }
                     </ul>
-                    <ul class="navbar-nav flex-grow-1 justify-content-end">
-                        <li class="nav-item">
+
+                    <ul class="navbar-nav d-flex align-items-center">
+                        <li class="nav-item me-3">
                             @await Component.InvokeAsync("CarrinhoResumo")
                         </li>
 
-                        @await Html.PartialAsync("_LoginPartial")
+                        <li class="nav-item">
+                            @await Html.PartialAsync("_LoginPartial")
+                        </li>
                     </ul>
                 </div>
             </div>
         </nav>
     </header>
-    <div class="container">
+
+    <!-- Espaço para compensar o header fixo -->
+    <div style="height: 70px;"></div>
+
+    <div class="container pb-5">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
+    <footer class="border-top footer text-muted mt-auto">
         <div class="container">
-            &copy; 2025 - Ecommerce - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            &copy; 2025 - Ecommerce - <a asp-controller="Home" asp-action="Privacy">Privacidade</a>
         </div>
     </footer>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
