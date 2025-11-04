@@ -178,7 +178,7 @@ namespace Ecomerce.Services
                 total += item.Quantidade * precoUnitario;
             }
 
-            return total;
+            return total - GetDescontoCupom();
         }
 
         public async Task<string> AplicarCupom(string codigoCupom)
@@ -195,12 +195,16 @@ namespace Ecomerce.Services
             if (carrinhoItens == null || !carrinhoItens.Any())
                 return "Seu carrinho está vazio. Adicione itens antes de aplicar um cupom.";
 
-            decimal subtotal = carrinhoItens.Sum(item => item.Quantidade * item.PrecoTabela);
+            decimal subtotal = carrinhoItens.Sum(item => 
+            {
+                decimal precoUnitario = item.PrecoPromocional.HasValue && item.PrecoPromocional.Value > 0
+                    ? item.PrecoPromocional.Value
+                    : item.PrecoTabela;
+                return item.Quantidade * precoUnitario;
+            });
 
             if (cupom.DataExpiracao.HasValue && cupom.DataExpiracao.Value < DateTime.Now)
-            {
                 return "Este cupom está expirado.";
-            }
 
             if (subtotal < cupom.ValorMinimoPedido)
                 return $"O cupom requer um valor mínimo de pedido de {cupom.ValorMinimoPedido:C2}.";
@@ -249,10 +253,17 @@ namespace Ecomerce.Services
             var carrinhoItens = ObterCarrinhoDaSessao();
             if (carrinhoItens == null || !carrinhoItens.Any()) return 0.00m;
 
-            decimal subtotal = carrinhoItens.Sum(item => item.Quantidade * item.PrecoTabela);
+            decimal subtotalBase = carrinhoItens.Sum(item =>
+            {
+                decimal precoUnitario = item.PrecoPromocional.HasValue && item.PrecoPromocional.Value > 0
+                    ? item.PrecoPromocional.Value
+                    : item.PrecoTabela;
+                    
+                return item.Quantidade * precoUnitario;
+            });
 
             decimal descontoCupom = GetDescontoCupom();
-            decimal total = subtotal - descontoCupom;
+            decimal total = subtotalBase - descontoCupom;
 
             return Math.Max(0, total);
         }

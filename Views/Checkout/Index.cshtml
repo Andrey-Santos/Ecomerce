@@ -4,6 +4,9 @@
 
 @{
     ViewData["Title"] = "Finalizar Compra";
+    // 1. Injetar ICarrinhoServico diretamente na View para obter o desconto do cupom
+    // Isso é necessário pois o desconto do cupom é armazenado na Session (via CarrinhoServico) e não no ViewBag.
+    var carrinhoServico = Context.RequestServices.GetRequiredService<ICarrinhoServico>();
 }
 <div class="container mt-5">
     <div class="row g-4 align-items-stretch">
@@ -53,11 +56,16 @@
                 <div class="card-body p-4">
 
                     @{
-                        var carrinhoItens = ViewBag.CarrinhoItens as List<ItemCarrinho>;
+                        List<ItemCarrinho> carrinhoItens = ViewBag.CarrinhoItens as List<ItemCarrinho>;
                         decimal totalFinal = ViewBag.TotalCarrinho ?? 0.00m;
 
                         decimal subtotalOriginal = 0.00m;
-                        decimal economiaTotal = 0.00m;
+                        decimal economiaPromocaoProduto = 0.00m;
+                        
+                        decimal descontoCupom = carrinhoServico.GetDescontoCupom();
+                        string codigoCupom = carrinhoServico.GetCodigoCupom();
+                        
+                        decimal economiaTotal = descontoCupom;
                     }
 
                     <table class="table align-middle">
@@ -72,19 +80,18 @@
                             {
                                 @foreach (ItemCarrinho item in carrinhoItens)
                                 {
-                                    // Utiliza item.PrecoTabela (preço original) e item.PrecoPromocional (preço com desconto)
                                     decimal precoTabela = item.PrecoTabela;
                                     decimal precoPromocional = item.PrecoPromocional ?? 0.00m;
                                     
                                     decimal precoFinal = precoPromocional > 0 && precoPromocional < precoTabela 
-                                                         ? precoPromocional 
-                                                         : precoTabela;
+                                                        ? precoPromocional 
+                                                        : precoTabela;
                                     
                                     bool temPromocao = precoFinal < precoTabela;
 
                                     subtotalOriginal += precoTabela * item.Quantidade;
-                                    economiaTotal += (precoTabela - precoFinal) * item.Quantidade;
-
+                                    economiaPromocaoProduto += (precoTabela - precoFinal) * item.Quantidade;
+                                    
                                     <tr>
                                         <td>
                                             <strong>@item.Quantidade x @(item.Produto?.Nome ?? "Produto Indisponível")</strong>
@@ -96,6 +103,7 @@
                                         <td class="text-end">@((precoFinal * item.Quantidade).ToString("C2"))</td>
                                     </tr>
                                 }
+                                economiaTotal += economiaPromocaoProduto;
                             }
                         </tbody>
                         <tfoot>
@@ -103,13 +111,31 @@
                                 <td class="fw-bold text-end">Subtotal (Preço Tabela):</td>
                                 <td class="fw-bold text-end">@subtotalOriginal.ToString("C2")</td>
                             </tr>
-                            @if (economiaTotal > 0)
+                            
+                            @if (descontoCupom > 0)
                             {
-                                <tr class="table-success">
-                                    <td class="fw-bold text-end text-success">Você economizou:</td>
-                                    <td class="fw-bold text-end text-success">- @economiaTotal.ToString("C2")</td>
+                                <tr class="table-info">
+                                    <td class="fw-bold text-end text-primary">Desconto Cupom (@codigoCupom):</td>
+                                    <td class="fw-bold text-end text-primary">- @descontoCupom.ToString("C2")</td>
                                 </tr>
                             }
+                            
+                            @if (economiaPromocaoProduto > 0)
+                            {
+                                <tr class="table-success">
+                                    <td class="fw-bold text-end text-success">Economia de Promoções:</td>
+                                    <td class="fw-bold text-end text-success">- @economiaPromocaoProduto.ToString("C2")</td>
+                                </tr>
+                            }
+                            
+                            @if (economiaTotal > 0)
+                            {
+                                <tr class="table-danger">
+                                    <td class="fw-bold text-end text-danger">Economia Total:</td>
+                                    <td class="fw-bold text-end text-danger">- @economiaTotal.ToString("C2")</td>
+                                </tr>
+                            }
+                            
                             <tr class="table-dark text-white">
                                 <td class="fw-bold text-end">Total a pagar:</td>
                                 <td class="fw-bold text-end">@totalFinal.ToString("C2")</td>

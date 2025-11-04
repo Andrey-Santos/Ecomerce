@@ -80,8 +80,8 @@ public class CheckoutController : Controller
             {
                 var variacaoIds = carrinhoItens.Select(i => i.VariacaoId).ToList();
                 var variacoesDb = await _context.Variacoes
-                                                 .Where(v => variacaoIds.Contains(v.Id))
-                                                 .ToListAsync();
+                                                .Where(v => variacaoIds.Contains(v.Id))
+                                                .ToListAsync();
 
                 foreach (var itemCarrinho in carrinhoItens)
                 {

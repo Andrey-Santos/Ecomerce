@@ -31,7 +31,7 @@ else
                             </span>
                             <span>
                                 **Status:** <span
-                                    class="badge @(pedido.Status == "Pendente" ? "bg-danger" : "bg-success")">@pedido.Status</span>
+                                    class="badge @(pedido.Status == "Pendente" || pedido.Status == "Processando" || pedido.Status == "Aguardando Pagamento" ? "bg-warning" : "bg-success")">@pedido.Status</span>
                                 **Total:** <span class="text-dark fw-bold ms-3">@pedido.TotalPedido.ToString("C2")</span>
                             </span>
                         </div>
@@ -42,11 +42,11 @@ else
                     <div class="accordion-body">
 
                         @{
-                            decimal subtotalOriginal = pedido.ItensPedido?.Sum(item =>
-                                item.Quantidade * (item.PrecoTabela > 0 ? item.PrecoTabela : item.PrecoUnitario)) ?? 0.00m;
-
-                            decimal totalItens = pedido.ItensPedido?.Sum(item => item.Quantidade * item.PrecoUnitario) ?? 0.00m;
-                            decimal descontoTotalExibido = subtotalOriginal - totalItens;
+                            decimal subtotalOriginal = pedido.ItensPedido?.Sum(item => item.Quantidade * item.PrecoTabela) ?? 0.00m;
+                            decimal subtotalBruto = pedido.ItensPedido?.Sum(item => item.Quantidade * item.PrecoUnitario) ?? 0.00m;
+                            decimal descontoCupom = pedido.ValorDescontoCupom;
+                            decimal descontoPromocaoProduto = subtotalOriginal - subtotalBruto;
+                            decimal economiaTotal = descontoPromocaoProduto + descontoCupom;
 
                             string nomeCliente = pedido.NomeCliente ?? "N/A";
                             string endereco = pedido.Endereco ?? "N/A";
@@ -60,21 +60,41 @@ else
                                 <p class="mb-0">**@nomeCliente**</p>
                                 <p class="mb-0">@endereco</p>
                                 <p class="mb-0">@cidade</p>
+                                @if (!string.IsNullOrEmpty(pedido.CodigoCupom))
+                                {
+                                    <p class="mb-0 mt-2">**Cupom Utilizado:** <span class="badge bg-primary">@pedido.CodigoCupom</span></p>
+                                }
                             </div>
 
                             <div class="col-md-6 mb-3">
                                 <h5>Resumo Financeiro:</h5>
                                 <ul class="list-group list-group-flush">
                                     <li class="list-group-item d-flex justify-content-between">
-                                        Subtotal:
+                                        Subtotal (Preço Tabela):
                                         <span class="fw-bold">@subtotalOriginal.ToString("C2")</span>
                                     </li>
 
-                                    @if (descontoTotalExibido > 0.00m)
+                                    @if (descontoPromocaoProduto > 0.00m)
                                     {
                                         <li class="list-group-item d-flex justify-content-between text-success">
-                                            Desconto:
-                                            <span class="fw-bold">- @descontoTotalExibido.ToString("C2")</span>
+                                            Desconto em Promoções:
+                                            <span class="fw-bold">- @descontoPromocaoProduto.ToString("C2")</span>
+                                        </li>
+                                    }
+
+                                    @if (descontoCupom > 0.00m)
+                                    {
+                                        <li class="list-group-item d-flex justify-content-between text-info">
+                                            Desconto do Cupom (@(pedido.CodigoCupom ?? "Código")):
+                                            <span class="fw-bold">- @descontoCupom.ToString("C2")</span>
+                                        </li>
+                                    }
+                                    
+                                    @if (economiaTotal > 0.00m)
+                                    {
+                                        <li class="list-group-item d-flex justify-content-between text-danger">
+                                            **Economia Total:**
+                                            <span class="fw-bold">- @economiaTotal.ToString("C2")</span>
                                         </li>
                                     }
 
