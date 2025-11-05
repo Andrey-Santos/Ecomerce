@@ -35,6 +35,10 @@
         margin-bottom: 1rem;
         overflow: hidden;
         background: #fff;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
     }
 
     .cart-card img {
@@ -46,12 +50,15 @@
 
     .cart-card .info {
         flex: 1;
-        padding-left: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
     }
 
     .cart-card .price {
         font-weight: bold;
         color: #198754;
+        font-size: 1.1em;
     }
 
     .cart-card .old-price {
@@ -59,11 +66,41 @@
         color: #888;
         font-size: 0.9em;
     }
+
+    @@media (max-width: 768px) {
+        .cart-card {
+            flex-direction: row;
+            align-items: flex-start;
+            padding: 10px;
+            gap: 10px;
+        }
+
+        .cart-card img {
+            width: 80px;
+            height: 80px;
+        }
+
+        .cart-card .info {
+            font-size: 0.9rem;
+        }
+
+        .card-body {
+            padding: 1rem;
+        }
+
+        .btn {
+            font-size: 0.9rem;
+        }
+
+        h1 {
+            font-size: 1.3rem;
+        }
+    }
 </style>
 
 <div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-        <h1 class="fw-bold text-primary mb-0">
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3 flex-wrap">
+        <h1 class="fw-bold text-primary mb-2">
             <i class="bi bi-cart-check-fill me-2"></i> Seu Carrinho
         </h1>
         <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary btn-sm">
@@ -133,11 +170,6 @@
                                                 {
                                                     <small class="text-muted">Sabor: @item.NomeVariacao</small>
                                                 }
-                                                else
-                                                {
-                                                    <small class="text-danger">Sabor não especificado</small>
-                                                }
-
                                                 @if (isPromocao)
                                                 {
                                                     <div><span class="badge bg-danger mt-1">Promoção</span></div>
@@ -175,46 +207,48 @@
                 }
                 else
                 {
-                    @foreach (ItemCarrinho item in Model)
-                    {
-                        decimal precoUnitarioFinal = item.PrecoPromocional.HasValue && item.PrecoPromocional.Value > 0
-                            ? item.PrecoPromocional.Value
-                            : item.PrecoTabela;
+                    <div class="d-flex flex-column gap-3">
+                        @foreach (ItemCarrinho item in Model)
+                        {
+                            decimal precoUnitarioFinal = item.PrecoPromocional.HasValue && item.PrecoPromocional.Value > 0
+                                ? item.PrecoPromocional.Value
+                                : item.PrecoTabela;
 
-                        bool isPromocao = item.PrecoPromocional.HasValue && item.PrecoPromocional.Value > 0 && item.PrecoPromocional.Value < item.PrecoTabela;
-                        Produto produto = item.Produto ?? new Produto { Nome = "Produto indisponível" };
+                            bool isPromocao = item.PrecoPromocional.HasValue && item.PrecoPromocional.Value > 0 && item.PrecoPromocional.Value < item.PrecoTabela;
+                            Produto produto = item.Produto ?? new Produto { Nome = "Produto indisponível" };
 
-                        <div class="cart-card p-3 d-flex align-items-center">
-                            <img src="@produto.ImagemUrl" alt="@produto.Nome" />
-                            <div class="info">
-                                <div class="fw-semibold">@produto.Nome</div>
-                                @if (!string.IsNullOrEmpty(item.NomeVariacao))
-                                {
-                                    <div><small class="text-muted">Sabor: @item.NomeVariacao</small></div>
-                                }
-                                @if (isPromocao)
-                                {
-                                    <span class="badge bg-danger mt-1">Promoção</span>
-                                }
-                                <div class="mt-2">
+                            <div class="cart-card">
+                                <img src="@produto.ImagemUrl" alt="@produto.Nome" />
+                                <div class="info">
+                                    <div class="fw-semibold">@produto.Nome</div>
+                                    @if (!string.IsNullOrEmpty(item.NomeVariacao))
+                                    {
+                                        <div><small class="text-muted">Sabor: @item.NomeVariacao</small></div>
+                                    }
                                     @if (isPromocao)
                                     {
-                                        <div class="old-price">@item.PrecoTabela.ToString("C", ptBR)</div>
+                                        <span class="badge bg-danger mt-1">Promoção</span>
                                     }
-                                    <div class="price">@precoUnitarioFinal.ToString("C", ptBR)</div>
-                                </div>
-                                <div class="d-flex justify-content-between align-items-center mt-2">
-                                    <small>Qtd: @item.Quantidade</small>
-                                    <form asp-controller="Carrinho" asp-action="RemoverItem" method="post">
-                                        <input type="hidden" name="variacaoId" value="@item.VariacaoId" />
-                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-circle">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
+                                    <div class="mt-2">
+                                        @if (isPromocao)
+                                        {
+                                            <div class="old-price">@item.PrecoTabela.ToString("C", ptBR)</div>
+                                        }
+                                        <div class="price">@precoUnitarioFinal.ToString("C", ptBR)</div>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mt-2">
+                                        <small>Qtd: @item.Quantidade</small>
+                                        <form asp-controller="Carrinho" asp-action="RemoverItem" method="post">
+                                            <input type="hidden" name="variacaoId" value="@item.VariacaoId" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-circle">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    }
+                        }
+                    </div>
                 }
             </div>
 
