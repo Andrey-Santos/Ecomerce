@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿@inject Ecomerce.Services.ICarrinhoServico CarrinhoServico
+<!DOCTYPE html>
 <html lang="pt-br">
 
 <head>
@@ -62,6 +63,24 @@
                 text-align: center;
             }
         }
+        
+        /* NOVO: Estilo para o indicador de carrinho no mobile */
+        .navbar-toggler {
+            position: relative; /* Permite posicionar o badge */
+        }
+        
+        .cart-indicator-badge {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 10px;
+            height: 10px;
+            background-color: #dc3545; /* Vermelho padrão do Bootstrap (danger) */
+            border-radius: 50%;
+            border: 2px solid #fff; /* Borda branca para contraste */
+            z-index: 10;
+            display: block;
+        }
     </style>
 </head>
 
@@ -73,10 +92,18 @@
                     <i class="bi bi-shop me-1"></i> Ecommerce
                 </a>
 
+                @{
+                    int totalItensCarrinho = CarrinhoServico.ObterItens().Count();
+                }
+                
                 <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse"
                     data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false"
                     aria-label="Alternar navegação">
                     <span class="navbar-toggler-icon"></span>
+                    @if (totalItensCarrinho > 0)
+                    {
+                        <span class="cart-indicator-badge"></span>
+                    }
                 </button>
 
                 <div class="collapse navbar-collapse" id="mainNavbar">
@@ -100,7 +127,7 @@
                         {
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle text-dark fw-medium" href="#" id="navbarAdminDropdown"
-                                   role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                     <i class="bi bi-gear-fill"></i> Área do Administrador
                                 </a>
                                 <ul class="dropdown-menu shadow-sm" aria-labelledby="navbarAdminDropdown">
@@ -138,7 +165,6 @@
         </nav>
     </header>
 
-    <!-- Espaço para compensar o header fixo -->
     <div style="height: 70px;"></div>
 
     <div class="container pb-5">
