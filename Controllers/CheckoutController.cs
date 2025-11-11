@@ -7,6 +7,8 @@ using Ecomerce.Data;
 using Ecomerce.Models;
 using Ecomerce.Extensoes;
 using Microsoft.EntityFrameworkCore;
+using System.Text;
+using System.Globalization;
 
 [Authorize]
 public class CheckoutController : Controller
@@ -150,16 +152,49 @@ public class CheckoutController : Controller
                 await _context.SaveChangesAsync();
 
                 await transaction.CommitAsync();
+                
+                const string NUMERO_WHATSAPP_ADMIN = "5547988762959"; 
+                
+                var cultureInfo = new CultureInfo("pt-BR");
+                var resumoTexto = new StringBuilder();
+
+                resumoTexto.AppendLine($"*🛒 NOVO PEDIDO RECEBIDO #@{novoPedido.Id}*");
+                resumoTexto.AppendLine($"Data: {novoPedido.DataPedido.ToString("dd/MM/yyyy HH:mm")}");
+                resumoTexto.AppendLine($"---");
+                resumoTexto.AppendLine($"*Cliente:* {novoPedido.NomeCliente}");
+                resumoTexto.AppendLine($"*Endereço:* {novoPedido.Endereco}");
+                resumoTexto.AppendLine($"*Cidade:* {novoPedido.Cidade}");
+                resumoTexto.AppendLine($"---");
+                resumoTexto.AppendLine($"*ITENS DO PEDIDO:*");
+                
+                foreach (var item in carrinhoItens)
+                {
+                    resumoTexto.AppendLine($"- {item.Quantidade}x {item.Produto.Nome} ({item.NomeVariacao})");
+                }
+                
+                resumoTexto.AppendLine($"---");
+                resumoTexto.AppendLine($"*TOTAL FINAL: {novoPedido.TotalPedido.ToString("C", cultureInfo)}*");
+                
+                if (novoPedido.ValorDescontoCupom > 0)
+                {
+                    resumoTexto.AppendLine($"Desconto (Cupom: {novoPedido.CodigoCupom}): -{novoPedido.ValorDescontoCupom.ToString("C", cultureInfo)}");
+                }
+                resumoTexto.AppendLine($"---");
+                resumoTexto.AppendLine("Acesse o painel para gerenciar o pedido.");
+
+                string mensagemCodificada = Uri.EscapeDataString(resumoTexto.ToString());
+                string whatsappUrl = $"https://wa.me/{NUMERO_WHATSAPP_ADMIN}?text={mensagemCodificada}";
+                
                 _carrinhoServico.LimparCarrinho();
                 _carrinhoServico.RemoverCupom();
 
                 TempData.Put("Notificacao", new Notificacao
                 {
                     Tipo = "Success",
-                    Mensagem = $"Pedido #{novoPedido.Id} realizado com sucesso!"
+                    Mensagem = $"Pedido #{novoPedido.Id} realizado com sucesso! Você será redirecionado para confirmar no WhatsApp."
                 });
 
-                return RedirectToAction("MeusPedidos", "Pedidos");
+                return Redirect(whatsappUrl);
             }
             catch
             {
